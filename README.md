@@ -1,3 +1,4 @@
 # MultisellCreator
 
-This project is developed by me for creating multisells XML files in GUI mode and is compatible with Mobius XML multisells.
+**MultisellCreator** is a Java GUI tool developed by **Skache** to create multisell XML files for Mobius-compatible servers.  
+It allows you to easily to design and export multisells in a user-friendly interface.
