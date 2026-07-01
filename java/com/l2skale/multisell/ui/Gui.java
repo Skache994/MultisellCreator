@@ -46,7 +46,7 @@ public class Gui
 	{
 		// Theme toggle button.
 		JButton themeButton = new JButton("☀️  Light");
-		themeButton.addActionListener(e -> ThemeManager.toggleTheme(themeButton, _frame));
+		themeButton.addActionListener(_ -> ThemeManager.toggleTheme(themeButton, _frame));
 
 		// Panel for the theme toggle button.
 		JPanel topPanel = new JPanel(new BorderLayout());
@@ -91,13 +91,13 @@ public class Gui
 		JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
 
 		// "New Item" Button
-		buttonPanel.add(ButtonFactory.createButton("New Item", e -> _controller.createNewItem(_frame)));
+		buttonPanel.add(ButtonFactory.createButton("New Item", _ -> _controller.createNewItem(_frame)));
 
 		// "Save" Button
-		buttonPanel.add(ButtonFactory.createButton("Save", e -> _controller.saveMultisell()));
+		buttonPanel.add(ButtonFactory.createButton("Save", _ -> _controller.saveMultisell()));
 
 		// "Clear" Button
-		buttonPanel.add(ButtonFactory.createButton("Clear", e -> _controller.clearLists()));
+		buttonPanel.add(ButtonFactory.createButton("Clear", _ -> _controller.clearLists()));
 
 		_frame.add(buttonPanel, BorderLayout.SOUTH);
 	}

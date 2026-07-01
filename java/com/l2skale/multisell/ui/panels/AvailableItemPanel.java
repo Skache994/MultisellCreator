@@ -201,7 +201,7 @@ public class AvailableItemPanel extends JPanel
 		clearButton.setContentAreaFilled(false);
 		clearButton.setFocusPainted(false);
 		clearButton.setToolTipText("Clear search");
-		clearButton.addActionListener(e ->
+		clearButton.addActionListener(_ ->
 		{
 			_searchField.setText("");
 			resetFilter();
@@ -270,7 +270,7 @@ public class AvailableItemPanel extends JPanel
 						// Add "Add as Ingredient"
 						JMenuItem addIngredientItem = new JMenuItem("Add as Ingredient");
 						menuStyler.styleMenuItem(addIngredientItem);
-						addIngredientItem.addActionListener(ev ->
+						addIngredientItem.addActionListener(_ ->
 						{
 							Item selectedItem = _availableItemsView.getSelectedValue();
 							if (selectedItem != null)
@@ -288,7 +288,7 @@ public class AvailableItemPanel extends JPanel
 						// Add "Add as Product"
 						JMenuItem addProductItem = new JMenuItem("Add as Product");
 						menuStyler.styleMenuItem(addProductItem);
-						addProductItem.addActionListener(ev ->
+						addProductItem.addActionListener(_ ->
 						{
 							Item selectedItem = _availableItemsView.getSelectedValue();
 							if (selectedItem != null)
@@ -306,7 +306,7 @@ public class AvailableItemPanel extends JPanel
 						// Add "View Info"
 						JMenuItem viewInfoItem = new JMenuItem("View Info");
 						menuStyler.styleMenuItem(viewInfoItem);
-						viewInfoItem.addActionListener(ev -> showItemInfo(_availableItemsView.getSelectedValue()));
+						viewInfoItem.addActionListener(_ -> showItemInfo(_availableItemsView.getSelectedValue()));
 						itemMenu.add(viewInfoItem);
 
 						itemMenu.show(_availableItemsView, e.getX(), e.getY());

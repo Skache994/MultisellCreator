@@ -138,7 +138,7 @@ public class MultisellEntryRenderer extends JPanel implements ListCellRenderer<M
 
 		// Add a Close button
 		JButton closeButton = new JButton("Close");
-		closeButton.addActionListener(e -> ingredientDialog.dispose()); // Close the dialog
+		closeButton.addActionListener(_ -> ingredientDialog.dispose()); // Close the dialog
 		ingredientDialog.getContentPane().add(closeButton, BorderLayout.SOUTH);
 
 		// Show the dialog

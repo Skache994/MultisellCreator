@@ -60,7 +60,7 @@ public class IngredientPanel extends JPanel
 
 		// Remove whole ingredient
 		JMenuItem removeItem = new JMenuItem("Remove Ingredient");
-		removeItem.addActionListener(e ->
+		removeItem.addActionListener(_ ->
 		{
 			ItemAmount selectedIngredient = _ingredientsView.getSelectedValue();
 			if (selectedIngredient != null)
@@ -71,7 +71,7 @@ public class IngredientPanel extends JPanel
 
 		// Remove specified amount of ingredient
 		JMenuItem removeAmountItem = new JMenuItem("Remove Specific Amount");
-		removeAmountItem.addActionListener(e ->
+		removeAmountItem.addActionListener(_ ->
 		{
 			ItemAmount selectedIngredient = _ingredientsView.getSelectedValue();
 			if (selectedIngredient != null)

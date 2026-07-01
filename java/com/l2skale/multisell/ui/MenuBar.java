@@ -31,9 +31,9 @@ public class MenuBar
 		JMenuItem exitItem = new JMenuItem("Exit");
 
 		// Placeholder Action for load and save
-		loadItem.addActionListener(e -> loadMultisell());
-		saveItem.addActionListener(e -> saveMultisell());
-		exitItem.addActionListener(e -> System.exit(0));
+		loadItem.addActionListener(_ -> loadMultisell());
+		saveItem.addActionListener(_ -> saveMultisell());
+		exitItem.addActionListener(_ -> System.exit(0));
 
 		fileMenu.add(loadItem);
 		fileMenu.add(saveItem);
@@ -45,7 +45,7 @@ public class MenuBar
 		JMenuItem deleteItem = new JMenuItem("Delete Selected");
 
 		// Placeholder Action for delete
-		deleteItem.addActionListener(e -> deleteSelectedMultisell());
+		deleteItem.addActionListener(_ -> deleteSelectedMultisell());
 
 		editMenu.add(deleteItem);
 
@@ -54,7 +54,7 @@ public class MenuBar
 		JMenuItem aboutItem = new JMenuItem("About");
 
 		// Action for About item
-		aboutItem.addActionListener(e -> showAboutDialog(parentFrame));
+		aboutItem.addActionListener(_ -> showAboutDialog(parentFrame));
 
 		helpMenu.add(aboutItem);
 

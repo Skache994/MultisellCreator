@@ -57,7 +57,7 @@ public class ProductPanel extends JPanel
 
 		// Remove whole product
 		JMenuItem removeProductItem = new JMenuItem("Remove Product");
-		removeProductItem.addActionListener(e ->
+		removeProductItem.addActionListener(_ ->
 		{
 			ItemAmount selectedProduct = _productsListView.getSelectedValue();
 			if (selectedProduct != null)
@@ -68,7 +68,7 @@ public class ProductPanel extends JPanel
 
 		// Remove specified amount of product
 		JMenuItem removeAmountItem = new JMenuItem("Remove Specific Amount");
-		removeAmountItem.addActionListener(e ->
+		removeAmountItem.addActionListener(_ ->
 		{
 			ItemAmount selectedProduct = _productsListView.getSelectedValue();
 			if (selectedProduct != null)

@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="MultisellCreator" default="package" basedir=".">
+	<description>
+		MultisellCreator - a GUI tool to create L2J Mobius multisell XML files.
+		Author: Skache
+	</description>
+
+	<!-- Build output lives OUTSIDE the project, in a sibling "release" folder. -->
+	<property name="src" location="java" />
+	<property name="resources" location="resources" />
+	<property name="launcher" location="launcher" />
+	<property name="release" location="../release" />
+	<property name="classes" location="${release}/classes" />
+	<property name="main.class" value="com.l2skale.multisell.MultisellCreator" />
+
+	<target name="checkRequirements" description="Check requirements.">
+		<available classname="java.util.stream.Stream" property="JDK25.present" />
+		<fail unless="JDK25.present" message="Java 25 is required, but your version is Java ${ant.java.version}." />
+	</target>
+
+	<target name="init" depends="checkRequirements" description="Create output directories.">
+		<delete dir="${classes}" quiet="true" />
+		<mkdir dir="${classes}" />
+	</target>
+
+	<target name="compile" depends="init" description="Compile the source.">
+		<javac srcdir="${src}" destdir="${classes}" compiler="modern" debug="true" debuglevel="lines,vars,source" includeantruntime="false" source="25" target="25" encoding="UTF-8" />
+		<!-- Copy bundled app resources (images, sounds, splash) into the classpath root. -->
+		<copy todir="${classes}">
+			<fileset dir="${resources}" />
+		</copy>
+	</target>
+
+	<target name="jar" depends="compile" description="Create the runnable jar.">
+		<tstamp>
+			<format property="time.stamp" pattern="yyyy-MM-dd HH:mm:ss z" />
+		</tstamp>
+		<jar destfile="${release}/MultisellCreator.jar" basedir="${classes}" level="9">
+			<manifest>
+				<attribute name="Build-By" value="${user.name}" />
+				<attribute name="Build-Date" value="${time.stamp}" />
+				<attribute name="Implementation-URL" value="http://www.l2jmobius.org/" />
+				<attribute name="Main-Class" value="${main.class}" />
+			</manifest>
+		</jar>
+	</target>
+
+	<target name="package" depends="jar" description="Assemble the runnable release (jar + launcher).">
+		<copy todir="${release}">
+			<fileset dir="${launcher}" />
+		</copy>
+	</target>
+
+	<target name="clean" description="Remove build output.">
+		<delete dir="${release}" quiet="true" />
+	</target>
+</project>

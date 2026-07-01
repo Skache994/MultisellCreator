@@ -46,7 +46,7 @@ public class ItemLoader
 		}
 
 		// List all XML files in the folder.
-		File[] files = folder.listFiles((dir, name) -> name.endsWith(".xml"));
+		File[] files = folder.listFiles((_, name) -> name.endsWith(".xml"));
 		if (files != null)
 		{
 			// Parse items from each XML file.
