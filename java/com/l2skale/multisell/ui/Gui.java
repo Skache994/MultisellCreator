@@ -1,17 +1,20 @@
 package com.l2skale.multisell.ui;
 
 import java.awt.BorderLayout;
+import java.awt.FlowLayout;
 import java.io.File;
 
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
 import javax.swing.JMenuBar;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JSplitPane;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
 import com.l2skale.multisell.MultisellCreator;
 import com.l2skale.multisell.data.MultisellLoader;
+import com.l2skale.multisell.data.MultisellSaver;
 import com.l2skale.multisell.datapack.Datapack;
 import com.l2skale.multisell.managers.ItemManager;
 import com.l2skale.multisell.managers.ThemeManager;
@@ -22,6 +25,7 @@ import com.l2skale.multisell.model.multisell.Multisell;
 import com.l2skale.multisell.model.multisell.MultisellItem;
 import com.l2skale.multisell.ui.panels.AvailableItemPanel;
 import com.l2skale.multisell.ui.panels.TrashBinPanel;
+import com.l2skale.multisell.ui.utils.ButtonFactory;
 import com.l2skale.multisell.ui.utils.DialogUtils;
 import com.l2skale.multisell.ui.utils.MessageUtils;
 import com.l2skale.multisell.ui.utils.Sound;
@@ -37,6 +41,7 @@ public class Gui
 	private Datapack _datapack;
 	private ItemManager _itemManager;
 	private RightPanel _rightPanel;
+	private Multisell _multisell;
 	private Entry _selectedEntry;
 
 	private static String ICON_PATH = "data/icons";
@@ -62,7 +67,7 @@ public class Gui
 		// Start empty - items are loaded when the user opens a datapack (File > Open Datapack).
 
 		// Add the menu bar.
-		JMenuBar menuBar = MenuBar.createMenuBar(_frame, this::openDatapack, this::openMultisell);
+		JMenuBar menuBar = MenuBar.createMenuBar(_frame, this::openDatapack, this::newMultisell, this::openMultisell, this::saveMultisell);
 		_frame.setJMenuBar(menuBar);
 
 		// Create the UI components.
@@ -91,8 +96,13 @@ public class Gui
 
 	private void addBottomBar()
 	{
-		// Bottom bar: trash bin on the right (New Entry / Save come next).
+		// New Entry button (adds a blank trade to the current multisell).
+		JPanel buttons = new JPanel(new FlowLayout(FlowLayout.CENTER));
+		buttons.add(ButtonFactory.createButton("New Entry", _ -> newEntry()));
+
+		// Bottom bar: buttons in the middle, trash bin on the right.
 		JPanel southPanel = new JPanel(new BorderLayout());
+		southPanel.add(buttons, BorderLayout.CENTER);
 		southPanel.add(new TrashBinPanel(), BorderLayout.EAST);
 		_frame.add(southPanel, BorderLayout.SOUTH);
 	}
@@ -135,6 +145,21 @@ public class Gui
 		MessageUtils.showInfoMessage(_frame, "Loaded " + count + " items from:\n" + datapack, "Datapack loaded");
 	}
 
+	// Start a new, empty multisell (its id is chosen at save time).
+	private void newMultisell()
+	{
+		if ((_datapack == null) || (_itemManager == null))
+		{
+			MessageUtils.showErrorMessage(_frame, "Open a datapack first (File > Open Datapack).", "No datapack");
+			return;
+		}
+
+		_multisell = new Multisell(0);
+		_rightPanel.getEntriesPanel().setMultisell(_multisell, _itemManager::getItemById);
+		showEntryInEditor(null);
+		_frame.setTitle("Multisell XML Creator  -  new multisell");
+	}
+
 	// Prompt for a multisell XML file from the datapack and display its entries.
 	private void openMultisell()
 	{
@@ -154,13 +179,82 @@ public class Gui
 
 		try
 		{
-			final Multisell multisell = MultisellLoader.load(chooser.getSelectedFile());
-			_rightPanel.getEntriesPanel().setMultisell(multisell, _itemManager::getItemById);
-			_frame.setTitle("Multisell XML Creator  -  #" + multisell.getId() + " (" + multisell.getEntries().size() + " entries)");
+			_multisell = MultisellLoader.load(chooser.getSelectedFile());
+			_rightPanel.getEntriesPanel().setMultisell(_multisell, _itemManager::getItemById);
+			showEntryInEditor(null);
+			_frame.setTitle("Multisell XML Creator  -  #" + _multisell.getId() + " (" + _multisell.getEntries().size() + " entries)");
 		}
 		catch (Exception e)
 		{
 			MessageUtils.showErrorMessage(_frame, "Could not load multisell:\n" + e.getMessage(), "Load failed");
+		}
+	}
+
+	// Add a blank entry (trade) to the current multisell and select it.
+	private void newEntry()
+	{
+		if (_multisell == null)
+		{
+			MessageUtils.showErrorMessage(_frame, "Create or open a multisell first (File menu).", "No multisell");
+			return;
+		}
+
+		final Entry entry = new Entry();
+		_multisell.getEntries().add(entry);
+		_rightPanel.getEntriesPanel().addEntry(entry);
+	}
+
+	// Save the current multisell to the datapack, asking for its id (the file name number).
+	private void saveMultisell()
+	{
+		if (_multisell == null)
+		{
+			MessageUtils.showErrorMessage(_frame, "Nothing to save - create or open a multisell first.", "Nothing to save");
+			return;
+		}
+
+		final String suggested = _multisell.getId() > 0 ? String.valueOf(_multisell.getId()) : "";
+		final String input = JOptionPane.showInputDialog(_frame, "Save as multisell id (number = file name):", suggested);
+		if (input == null)
+		{
+			return;
+		}
+
+		final int id;
+		try
+		{
+			id = Integer.parseInt(input.trim());
+		}
+		catch (NumberFormatException e)
+		{
+			MessageUtils.showErrorMessage(_frame, "The id must be a number.", "Invalid id");
+			return;
+		}
+
+		_multisell.setId(id);
+		final File dir = _datapack.getMultisellDir();
+		dir.mkdirs();
+		final File file = new File(dir, id + ".xml");
+
+		if (file.exists())
+		{
+			final int choice = JOptionPane.showConfirmDialog(_frame, file.getName() + " already exists. Overwrite?", "File exists", JOptionPane.YES_NO_OPTION);
+			if (choice != JOptionPane.YES_OPTION)
+			{
+				return;
+			}
+		}
+
+		try
+		{
+			MultisellSaver.save(_multisell, file, _itemManager::getItemById);
+			_frame.setTitle("Multisell XML Creator  -  #" + id + " (" + _multisell.getEntries().size() + " entries)");
+			MessageUtils.showInfoMessage(_frame, "Saved to:\n" + file.getAbsolutePath(), "Saved");
+			Sound.playSound("sys_exchange_success.wav");
+		}
+		catch (Exception e)
+		{
+			MessageUtils.showErrorMessage(_frame, "Could not save:\n" + e.getMessage(), "Save failed");
 		}
 	}
 

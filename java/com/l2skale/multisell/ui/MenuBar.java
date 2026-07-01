@@ -20,40 +20,31 @@ import com.l2skale.multisell.ui.utils.ResourceIcons;
 public class MenuBar
 {
 	// Method to create the JMenuBar
-	public static JMenuBar createMenuBar(JFrame parentFrame, Runnable onOpenDatapack, Runnable onLoadMultisell)
+	public static JMenuBar createMenuBar(JFrame parentFrame, Runnable onOpenDatapack, Runnable onNewMultisell, Runnable onOpenMultisell, Runnable onSaveMultisell)
 	{
 		JMenuBar menuBar = new JMenuBar();
 
 		// File Menu
 		JMenu fileMenu = new JMenu("File");
 		JMenuItem openDatapackItem = new JMenuItem("Open Datapack...");
-		JMenuItem loadItem = new JMenuItem("Load Multisell");
+		JMenuItem newItem = new JMenuItem("New Multisell");
+		JMenuItem openItem = new JMenuItem("Open Multisell...");
 		JMenuItem saveItem = new JMenuItem("Save Multisell");
 		JMenuItem exitItem = new JMenuItem("Exit");
 
-		// Open Datapack loads item definitions from a server datapack folder.
 		openDatapackItem.addActionListener(_ -> onOpenDatapack.run());
-
-		// Load opens an existing multisell XML and shows its entries.
-		loadItem.addActionListener(_ -> onLoadMultisell.run());
-		saveItem.addActionListener(_ -> saveMultisell());
+		newItem.addActionListener(_ -> onNewMultisell.run());
+		openItem.addActionListener(_ -> onOpenMultisell.run());
+		saveItem.addActionListener(_ -> onSaveMultisell.run());
 		exitItem.addActionListener(_ -> System.exit(0));
 
 		fileMenu.add(openDatapackItem);
 		fileMenu.addSeparator();
-		fileMenu.add(loadItem);
+		fileMenu.add(newItem);
+		fileMenu.add(openItem);
 		fileMenu.add(saveItem);
 		fileMenu.addSeparator();
 		fileMenu.add(exitItem);
-
-		// Edit Menu
-		JMenu editMenu = new JMenu("Edit");
-		JMenuItem deleteItem = new JMenuItem("Delete Selected");
-
-		// Placeholder Action for delete
-		deleteItem.addActionListener(_ -> deleteSelectedMultisell());
-
-		editMenu.add(deleteItem);
 
 		// Help Menu
 		JMenu helpMenu = new JMenu("Help");
@@ -66,7 +57,6 @@ public class MenuBar
 
 		// Add menus to the bar
 		menuBar.add(fileMenu);
-		menuBar.add(editMenu);
 		menuBar.add(helpMenu);
 
 		return menuBar;
@@ -137,17 +127,4 @@ public class MenuBar
 		JOptionPane.showMessageDialog(parentFrame, new JScrollPane(editorPane), "About", JOptionPane.INFORMATION_MESSAGE, appIcon);
 	}
 
-	// Placeholder for saving a multisell file
-	private static void saveMultisell()
-	{
-		// Add logic to save the multisell data
-		System.out.println("Save Multisell...");
-	}
-
-	// Placeholder for deleting selected multisell item
-	private static void deleteSelectedMultisell()
-	{
-		// Add logic to delete selected multisell
-		System.out.println("Delete Selected Multisell...");
-	}
 }

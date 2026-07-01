@@ -32,6 +32,8 @@ public class EntriesPanel extends JPanel
 	private final EntryRowRenderer _renderer = new EntryRowRenderer();
 	private final JLabel _title = new JLabel("Entries");
 
+	private Multisell _multisell;
+
 	public EntriesPanel()
 	{
 		setLayout(new BorderLayout());
@@ -60,13 +62,28 @@ public class EntriesPanel extends JPanel
 	// Display the given multisell; itemLookup resolves item ids to Items for icons/names.
 	public void setMultisell(Multisell multisell, IntFunction<Item> itemLookup)
 	{
+		_multisell = multisell;
 		_renderer.setItemLookup(itemLookup);
 		_model.clear();
 		for (Entry entry : multisell.getEntries())
 		{
 			_model.addElement(entry);
 		}
-		_title.setText("Entries  -  multisell #" + multisell.getId() + " (" + multisell.getEntries().size() + ")");
+		updateTitle();
+	}
+
+	// Append a new entry to the list and select it.
+	public void addEntry(Entry entry)
+	{
+		_model.addElement(entry);
+		updateTitle();
+		_view.setSelectedValue(entry, true);
+	}
+
+	private void updateTitle()
+	{
+		final String id = ((_multisell != null) && (_multisell.getId() > 0)) ? ("#" + _multisell.getId()) : "(new)";
+		_title.setText("Entries  -  multisell " + id + "  (" + _model.getSize() + ")");
 	}
 
 	// Tell the list that one entry changed so its row is re-rendered.
