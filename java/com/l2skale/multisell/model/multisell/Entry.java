@@ -33,4 +33,19 @@ public class Entry
 	{
 		_products.add(product);
 	}
+
+	// A deep copy of this entry (with copies of its items).
+	public Entry copy()
+	{
+		final Entry copy = new Entry();
+		for (MultisellItem ingredient : _ingredients)
+		{
+			copy.addIngredient(ingredient.copy());
+		}
+		for (MultisellItem product : _products)
+		{
+			copy.addProduct(product.copy());
+		}
+		return copy;
+	}
 }

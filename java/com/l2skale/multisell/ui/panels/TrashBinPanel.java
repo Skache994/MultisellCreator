@@ -2,13 +2,20 @@ package com.l2skale.multisell.ui.panels;
 
 import java.awt.Dimension;
 import java.awt.FlowLayout;
+import java.awt.datatransfer.Transferable;
+import java.awt.dnd.DnDConstants;
+import java.awt.dnd.DropTarget;
+import java.awt.dnd.DropTargetAdapter;
+import java.awt.dnd.DropTargetDropEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.function.Consumer;
 
 import javax.swing.ImageIcon;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
+import com.l2skale.multisell.ui.dnd.LocalObjectTransferable;
 import com.l2skale.multisell.ui.utils.ResourceIcons;
 import com.l2skale.multisell.ui.utils.Sound;
 
@@ -22,6 +29,8 @@ public class TrashBinPanel extends JPanel
 	private ImageIcon _trashIcon;
 	private ImageIcon _trashIconHover;
 	private ImageIcon _trashIconDrag;
+
+	private Consumer<Object> _onDelete;
 
 	public TrashBinPanel()
 	{
@@ -72,8 +81,44 @@ public class TrashBinPanel extends JPanel
 
 		_trashBin.setToolTipText("Destruction");
 
+		// Accept items/entries dragged here and hand them to the delete callback.
+		new DropTarget(_trashBin, new DropTargetAdapter()
+		{
+			@Override
+			public void drop(DropTargetDropEvent event)
+			{
+				try
+				{
+					final Transferable transferable = event.getTransferable();
+					if (transferable.isDataFlavorSupported(LocalObjectTransferable.FLAVOR))
+					{
+						event.acceptDrop(DnDConstants.ACTION_MOVE);
+						final Object value = transferable.getTransferData(LocalObjectTransferable.FLAVOR);
+						if (_onDelete != null)
+						{
+							_onDelete.accept(value);
+						}
+						Sound.playSound("trash_basket.wav");
+						event.dropComplete(true);
+						return;
+					}
+				}
+				catch (Exception e)
+				{
+					e.printStackTrace();
+				}
+				event.rejectDrop();
+			}
+		});
+
 		// Panel for Trash Bin
 		setLayout(new FlowLayout(FlowLayout.CENTER));
 		add(_trashBin);
+	}
+
+	// Called with the dragged object (an item or an entry) when something is dropped on the bin.
+	public void setOnDelete(Consumer<Object> onDelete)
+	{
+		_onDelete = onDelete;
 	}
 }

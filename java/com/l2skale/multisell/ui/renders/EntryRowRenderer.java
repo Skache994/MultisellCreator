@@ -16,6 +16,7 @@ import javax.swing.ListCellRenderer;
 import com.l2skale.multisell.model.Item;
 import com.l2skale.multisell.model.multisell.Entry;
 import com.l2skale.multisell.model.multisell.MultisellItem;
+import com.l2skale.multisell.ui.utils.Numbers;
 
 /*
  * Renders one multisell entry as a row, game style: the product first (the
@@ -79,7 +80,7 @@ public class EntryRowRenderer extends JPanel implements ListCellRenderer<Entry>
 		String text = item != null ? item.getName() : ("id " + multisellItem.getItemId());
 		if (multisellItem.getCount() > 1)
 		{
-			text += "  x" + multisellItem.getCount();
+			text += "  x" + Numbers.format(multisellItem.getCount());
 		}
 
 		final JLabel name = new JLabel(" " + text);
@@ -96,7 +97,7 @@ public class EntryRowRenderer extends JPanel implements ListCellRenderer<Entry>
 		final JPanel chip = transparentRow();
 		chip.add(new ItemSlot(item, multisellItem.getItemId(), INGREDIENT_SLOT));
 
-		final JLabel count = new JLabel(" x" + multisellItem.getCount());
+		final JLabel count = new JLabel(" x" + Numbers.format(multisellItem.getCount()));
 		count.setForeground(fg);
 		chip.add(count);
 		return chip;

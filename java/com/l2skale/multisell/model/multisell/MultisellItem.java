@@ -59,4 +59,13 @@ public class MultisellItem
 	{
 		_maintainIngredient = maintainIngredient;
 	}
+
+	// A new item with the same values.
+	public MultisellItem copy()
+	{
+		final MultisellItem copy = new MultisellItem(_itemId, _count);
+		copy.setEnchantmentLevel(_enchantmentLevel);
+		copy.setMaintainIngredient(_maintainIngredient);
+		return copy;
+	}
 }

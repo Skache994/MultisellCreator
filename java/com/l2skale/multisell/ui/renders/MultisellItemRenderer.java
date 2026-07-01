@@ -13,6 +13,7 @@ import javax.swing.ListCellRenderer;
 
 import com.l2skale.multisell.model.Item;
 import com.l2skale.multisell.model.multisell.MultisellItem;
+import com.l2skale.multisell.ui.utils.Numbers;
 
 /*
  * Renders one multisell item as "slot + name xCount", used inside the editor's
@@ -51,7 +52,7 @@ public class MultisellItemRenderer extends JPanel implements ListCellRenderer<Mu
 		add(new ItemSlot(item, value.getItemId(), SLOT));
 
 		final String name = item != null ? item.getName() : ("id " + value.getItemId());
-		final JLabel label = new JLabel(name + "   x" + value.getCount());
+		final JLabel label = new JLabel(name + "   x" + Numbers.format(value.getCount()));
 		label.setForeground(fg);
 		add(label);
 

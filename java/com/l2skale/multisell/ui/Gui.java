@@ -1,15 +1,19 @@
 package com.l2skale.multisell.ui;
 
 import java.awt.BorderLayout;
+import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.io.File;
 
 import javax.swing.JButton;
+import javax.swing.JComponent;
 import javax.swing.JFileChooser;
 import javax.swing.JMenuBar;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JSeparator;
 import javax.swing.JSplitPane;
+import javax.swing.SwingConstants;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
 import com.l2skale.multisell.MultisellCreator;
@@ -24,6 +28,7 @@ import com.l2skale.multisell.model.multisell.Entry;
 import com.l2skale.multisell.model.multisell.Multisell;
 import com.l2skale.multisell.model.multisell.MultisellItem;
 import com.l2skale.multisell.ui.panels.AvailableItemPanel;
+import com.l2skale.multisell.ui.panels.MultisellSettingsPanel;
 import com.l2skale.multisell.ui.panels.TrashBinPanel;
 import com.l2skale.multisell.ui.utils.ButtonFactory;
 import com.l2skale.multisell.ui.utils.DialogUtils;
@@ -37,6 +42,7 @@ public class Gui
 {
 	private final MultisellCreator _frame; // Main frame reference.
 	private final AvailableItemList _availableItemsList = new AvailableItemList();
+	private final MultisellSettingsPanel _settingsPanel = new MultisellSettingsPanel();
 
 	private Datapack _datapack;
 	private ItemManager _itemManager;
@@ -59,10 +65,16 @@ public class Gui
 		themeButton.addActionListener(_ -> ThemeManager.toggleTheme(themeButton, _frame));
 		ThemeManager.updateThemeButton(themeButton);
 
-		// Panel for the theme toggle button.
+		// Top strip: toolbar on the left, theme toggle on the right.
 		JPanel topPanel = new JPanel(new BorderLayout());
+		topPanel.add(buildToolbar(), BorderLayout.WEST);
 		topPanel.add(themeButton, BorderLayout.EAST);
-		_frame.add(topPanel, BorderLayout.NORTH);
+
+		// North: theme row on top, the multisell settings bar below it.
+		JPanel north = new JPanel(new BorderLayout());
+		north.add(topPanel, BorderLayout.NORTH);
+		north.add(_settingsPanel, BorderLayout.CENTER);
+		_frame.add(north, BorderLayout.NORTH);
 
 		// Start empty - items are loaded when the user opens a datapack (File > Open Datapack).
 
@@ -87,11 +99,34 @@ public class Gui
 		_rightPanel.getProductsPanel().setOnRemove(item -> removeFromSelected(false, item));
 		_rightPanel.getIngredientsPanel().enableItemDrop(item -> addItemToSelected(true, item));
 		_rightPanel.getProductsPanel().enableItemDrop(item -> addItemToSelected(false, item));
+		_rightPanel.getIngredientsPanel().setOnEditAmount(this::editAmount);
+		_rightPanel.getProductsPanel().setOnEditAmount(this::editAmount);
+		_rightPanel.getEntriesPanel().enableEntryDrag();
+		_rightPanel.getEntriesPanel().setOnDuplicate(this::duplicateEntry);
+		_rightPanel.getEntriesPanel().setOnDelete(this::deleteEntry);
 
 		// Set up the split pane
 		JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, leftPanel, _rightPanel);
 		splitPane.setDividerLocation(200);
 		_frame.add(splitPane, BorderLayout.CENTER);
+	}
+
+	private JPanel buildToolbar()
+	{
+		JPanel toolbar = new JPanel(new FlowLayout(FlowLayout.LEFT, 4, 2));
+		toolbar.add(ButtonFactory.createButton("Open Datapack", _ -> openDatapack()));
+		toolbar.add(toolbarSeparator());
+		toolbar.add(ButtonFactory.createButton("New", _ -> newMultisell()));
+		toolbar.add(ButtonFactory.createButton("Open", _ -> openMultisell()));
+		toolbar.add(ButtonFactory.createButton("Save", _ -> saveMultisell()));
+		return toolbar;
+	}
+
+	private JComponent toolbarSeparator()
+	{
+		JSeparator separator = new JSeparator(SwingConstants.VERTICAL);
+		separator.setPreferredSize(new Dimension(2, 24));
+		return separator;
 	}
 
 	private void addBottomBar()
@@ -100,10 +135,14 @@ public class Gui
 		JPanel buttons = new JPanel(new FlowLayout(FlowLayout.CENTER));
 		buttons.add(ButtonFactory.createButton("New Entry", _ -> newEntry()));
 
+		// Trash bin: drag an item or entry here to delete it.
+		TrashBinPanel trashBin = new TrashBinPanel();
+		trashBin.setOnDelete(this::deleteDragged);
+
 		// Bottom bar: buttons in the middle, trash bin on the right.
 		JPanel southPanel = new JPanel(new BorderLayout());
 		southPanel.add(buttons, BorderLayout.CENTER);
-		southPanel.add(new TrashBinPanel(), BorderLayout.EAST);
+		southPanel.add(trashBin, BorderLayout.EAST);
 		_frame.add(southPanel, BorderLayout.SOUTH);
 	}
 
@@ -156,6 +195,7 @@ public class Gui
 
 		_multisell = new Multisell(0);
 		_rightPanel.getEntriesPanel().setMultisell(_multisell, _itemManager::getItemById);
+		_settingsPanel.setMultisell(_multisell);
 		showEntryInEditor(null);
 		_frame.setTitle("Multisell XML Creator  -  new multisell");
 	}
@@ -181,6 +221,7 @@ public class Gui
 		{
 			_multisell = MultisellLoader.load(chooser.getSelectedFile());
 			_rightPanel.getEntriesPanel().setMultisell(_multisell, _itemManager::getItemById);
+			_settingsPanel.setMultisell(_multisell);
 			showEntryInEditor(null);
 			_frame.setTitle("Multisell XML Creator  -  #" + _multisell.getId() + " (" + _multisell.getEntries().size() + " entries)");
 		}
@@ -248,6 +289,7 @@ public class Gui
 		try
 		{
 			MultisellSaver.save(_multisell, file, _itemManager::getItemById);
+			_settingsPanel.setMultisell(_multisell);
 			_frame.setTitle("Multisell XML Creator  -  #" + id + " (" + _multisell.getEntries().size() + " entries)");
 			MessageUtils.showInfoMessage(_frame, "Saved to:\n" + file.getAbsolutePath(), "Saved");
 			Sound.playSound("sys_exchange_success.wav");
@@ -271,6 +313,77 @@ public class Gui
 
 		_rightPanel.getIngredientsPanel().setItems(entry.getIngredients(), _itemManager::getItemById);
 		_rightPanel.getProductsPanel().setItems(entry.getProducts(), _itemManager::getItemById);
+	}
+
+	// Handle something dragged onto the trash bin: an item (remove from the selected
+	// entry) or an entry (remove from the multisell).
+	private void deleteDragged(Object dragged)
+	{
+		if (dragged instanceof MultisellItem multisellItem)
+		{
+			if (_selectedEntry != null)
+			{
+				_selectedEntry.getIngredients().remove(multisellItem);
+				_selectedEntry.getProducts().remove(multisellItem);
+				refreshAfterEdit();
+			}
+		}
+		else if (dragged instanceof Entry entry)
+		{
+			deleteEntry(entry);
+		}
+	}
+
+	// Change the amount of an item in the selected entry (double-click? Why not :D)
+	private void editAmount(MultisellItem item)
+	{
+		final Item template = _itemManager == null ? null : _itemManager.getItemById(item.getItemId());
+		final String name = template != null ? template.getName() : ("id " + item.getItemId());
+
+		final Integer amount = DialogUtils.promptForAmount(_frame, name, item.getCount());
+		if (amount == null)
+		{
+			return;
+		}
+
+		item.setCount(amount);
+		refreshAfterEdit();
+	}
+
+	// Duplicate an entry (right-click) and select the copy.
+	private void duplicateEntry(Entry entry)
+	{
+		if (_multisell == null)
+		{
+			return;
+		}
+
+		final Entry copy = entry.copy();
+		final int index = _multisell.getEntries().indexOf(entry);
+		if (index >= 0)
+		{
+			_multisell.getEntries().add(index + 1, copy);
+		}
+		else
+		{
+			_multisell.getEntries().add(copy);
+		}
+
+		_rightPanel.getEntriesPanel().setMultisell(_multisell, _itemManager::getItemById);
+		_rightPanel.getEntriesPanel().selectEntry(copy);
+	}
+
+	// Remove an entry from the current multisell.
+	private void deleteEntry(Entry entry)
+	{
+		if (_multisell == null)
+		{
+			return;
+		}
+
+		_multisell.getEntries().remove(entry);
+		_rightPanel.getEntriesPanel().setMultisell(_multisell, _itemManager::getItemById);
+		showEntryInEditor(null);
 	}
 
 	// Remove an item from the selected entry's ingredient or product list.

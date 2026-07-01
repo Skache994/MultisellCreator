@@ -37,6 +37,7 @@ public class EntrySidePanel extends JPanel
 	private final MultisellItemRenderer _renderer = new MultisellItemRenderer();
 
 	private Consumer<MultisellItem> _onRemove;
+	private Consumer<MultisellItem> _onEditAmount;
 
 	public EntrySidePanel(String title)
 	{
@@ -58,6 +59,12 @@ public class EntrySidePanel extends JPanel
 		_onRemove = onRemove;
 	}
 
+	// Called when the user double-clicks an item (to change its amount).
+	public void setOnEditAmount(Consumer<MultisellItem> onEditAmount)
+	{
+		_onEditAmount = onEditAmount;
+	}
+
 	// Show the given items; itemLookup resolves ids to Items for icons/names.
 	public void setItems(List<MultisellItem> items, IntFunction<Item> itemLookup)
 	{
@@ -75,11 +82,13 @@ public class EntrySidePanel extends JPanel
 		_model.clear();
 	}
 
-	// Allow items dragged from the item list to be dropped here.
+	// Allow items dragged from the item list to be dropped here, and allow the
+	// list's own items to be dragged out (e.g. onto the trash bin).
 	public void enableItemDrop(Consumer<Item> onDrop)
 	{
+		_view.setDragEnabled(true);
 		_view.setDropMode(DropMode.ON);
-		_view.setTransferHandler(new AddItemTransferHandler(onDrop));
+		_view.setTransferHandler(new AddItemTransferHandler(_view, onDrop));
 	}
 
 	private void installContextMenu()
@@ -96,6 +105,24 @@ public class EntrySidePanel extends JPanel
 			public void mouseReleased(MouseEvent e)
 			{
 				showPopup(e);
+			}
+
+			@Override
+			public void mouseClicked(MouseEvent e)
+			{
+				if (e.getClickCount() == 2)
+				{
+					final int index = _view.locationToIndex(e.getPoint());
+					if (index >= 0)
+					{
+						_view.setSelectedIndex(index);
+						final MultisellItem selected = _view.getSelectedValue();
+						if ((selected != null) && (_onEditAmount != null))
+						{
+							_onEditAmount.accept(selected);
+						}
+					}
+				}
 			}
 		});
 	}
