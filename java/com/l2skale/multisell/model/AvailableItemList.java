@@ -24,4 +24,10 @@ public class AvailableItemList
 	{
 		_availableItemList.addElement(item);
 	}
+
+	// Remove all items from the list.
+	public void clear()
+	{
+		_availableItemList.clear();
+	}
 }

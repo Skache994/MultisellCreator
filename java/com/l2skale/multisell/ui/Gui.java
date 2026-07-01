@@ -2,14 +2,17 @@ package com.l2skale.multisell.ui;
 
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
+import java.io.File;
 
 import javax.swing.JButton;
+import javax.swing.JFileChooser;
 import javax.swing.JMenuBar;
 import javax.swing.JPanel;
 import javax.swing.JSplitPane;
 
 import com.l2skale.multisell.MultisellController;
 import com.l2skale.multisell.MultisellCreator;
+import com.l2skale.multisell.datapack.Datapack;
 import com.l2skale.multisell.managers.ItemManager;
 import com.l2skale.multisell.managers.ThemeManager;
 import com.l2skale.multisell.model.AvailableItemList;
@@ -19,6 +22,7 @@ import com.l2skale.multisell.model.MultisellList;
 import com.l2skale.multisell.model.ProductList;
 import com.l2skale.multisell.ui.panels.AvailableItemPanel;
 import com.l2skale.multisell.ui.utils.ButtonFactory;
+import com.l2skale.multisell.ui.utils.MessageUtils;
 
 /*
  * author Skache
@@ -32,7 +36,6 @@ public class Gui
 	private final MultisellList _multisellList = new MultisellList();
 	private final MultisellController _controller;
 
-	private static String ITEM_PATH = "data/items";
 	private static String ICON_PATH = "data/icons";
 
 	public Gui(MultisellCreator frame)
@@ -53,18 +56,10 @@ public class Gui
 		topPanel.add(themeButton, BorderLayout.EAST);
 		_frame.add(topPanel, BorderLayout.NORTH);
 
-		// Item manager setup
-		ItemManager itemManager = new ItemManager(ITEM_PATH, ICON_PATH);
-		itemManager.loadItems();
-
-		// Add items to the availableItemsList.
-		for (Item item : itemManager.getAllItems().values())
-		{
-			_availableItemsList.addItem(item);
-		}
+		// Start empty - items are loaded when the user opens a datapack (File > Open Datapack).
 
 		// Add the menu bar.
-		JMenuBar menuBar = MenuBar.createMenuBar(_frame);
+		JMenuBar menuBar = MenuBar.createMenuBar(_frame, this::openDatapack);
 		_frame.setJMenuBar(menuBar);
 
 		// Create the UI components.
@@ -100,5 +95,42 @@ public class Gui
 		buttonPanel.add(ButtonFactory.createButton("Clear", _ -> _controller.clearLists()));
 
 		_frame.add(buttonPanel, BorderLayout.SOUTH);
+	}
+
+	// (Re)load the available items from the given item and icon folders.
+	private int loadItems(File itemsDir, File iconsDir)
+	{
+		_availableItemsList.clear();
+
+		final ItemManager itemManager = new ItemManager(itemsDir.getPath(), iconsDir.getPath());
+		itemManager.loadItems();
+		for (Item item : itemManager.getAllItems().values())
+		{
+			_availableItemsList.addItem(item);
+		}
+
+		return itemManager.getAllItems().size();
+	}
+
+	// Prompt for a server datapack folder and load its items into the list.
+	private void openDatapack()
+	{
+		final JFileChooser chooser = new JFileChooser();
+		chooser.setDialogTitle("Select server datapack folder");
+		chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+		if (chooser.showOpenDialog(_frame) != JFileChooser.APPROVE_OPTION)
+		{
+			return;
+		}
+
+		final Datapack datapack = new Datapack(chooser.getSelectedFile());
+		if (!datapack.isValid())
+		{
+			MessageUtils.showErrorMessage(_frame, "That folder is not a valid datapack.\nExpected to find: " + datapack.getItemsDir(), "Invalid datapack");
+			return;
+		}
+
+		final int count = loadItems(datapack.getItemsDir(), new File(ICON_PATH));
+		MessageUtils.showInfoMessage(_frame, "Loaded " + count + " items from:\n" + datapack, "Datapack loaded");
 	}
 }
