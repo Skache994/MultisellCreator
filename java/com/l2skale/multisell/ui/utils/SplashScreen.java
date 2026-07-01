@@ -1,7 +1,6 @@
 package com.l2skale.multisell.ui.utils;
 
 import java.awt.Color;
-import java.awt.Frame;
 import java.awt.Graphics;
 import java.awt.Image;
 import java.awt.Toolkit;
@@ -24,6 +23,7 @@ import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 import javax.swing.JWindow;
+import javax.swing.SwingUtilities;
 
 /*
  * @author Skache
@@ -62,19 +62,22 @@ public class SplashScreen extends JWindow
 			@Override
 			public void run()
 			{
-				setVisible(false);
-				if (parent != null)
+				// Swing work must run on the Event Dispatch Thread.
+				SwingUtilities.invokeLater(() ->
 				{
-					// Make parent visible
-					parent.setVisible(true);
-					parent.toFront();
-					parent.setState(Frame.ICONIFIED);
-					parent.setState(Frame.NORMAL);
+					setVisible(false);
+					if (parent != null)
+					{
+						// Reveal the main window and bring it to the front.
+						parent.setVisible(true);
+						parent.toFront();
+						parent.requestFocus();
 
-					// Play sound when the window appears
-					Sound.playSound("inventory_open_01.wav");
-				}
-				dispose();
+						// Play sound when the window appears.
+						Sound.playSound("inventory_open_01.wav");
+					}
+					dispose();
+				});
 			}
 		}, imageIcon.getIconWidth() > 0 ? time : 100); // Show for 'time' ms, default to 100ms if no image
 	}

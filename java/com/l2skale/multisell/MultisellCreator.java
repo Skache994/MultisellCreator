@@ -48,10 +48,7 @@ public class MultisellCreator extends JFrame
 
 	public static void main(String[] args)
 	{
-		SwingUtilities.invokeLater(() ->
-		{
-			MultisellCreator multisellCreator = new MultisellCreator();
-			multisellCreator.setVisible(true);
-		});
+		// Construct the window; the splash screen reveals it when it finishes.
+		SwingUtilities.invokeLater(() -> new MultisellCreator());
 	}
 }
