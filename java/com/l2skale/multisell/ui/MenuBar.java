@@ -20,7 +20,7 @@ import com.l2skale.multisell.ui.utils.ResourceIcons;
 public class MenuBar
 {
 	// Method to create the JMenuBar
-	public static JMenuBar createMenuBar(JFrame parentFrame, Runnable onOpenDatapack)
+	public static JMenuBar createMenuBar(JFrame parentFrame, Runnable onOpenDatapack, Runnable onLoadMultisell)
 	{
 		JMenuBar menuBar = new JMenuBar();
 
@@ -34,8 +34,8 @@ public class MenuBar
 		// Open Datapack loads item definitions from a server datapack folder.
 		openDatapackItem.addActionListener(_ -> onOpenDatapack.run());
 
-		// Placeholder Action for load and save
-		loadItem.addActionListener(_ -> loadMultisell());
+		// Load opens an existing multisell XML and shows its entries.
+		loadItem.addActionListener(_ -> onLoadMultisell.run());
 		saveItem.addActionListener(_ -> saveMultisell());
 		exitItem.addActionListener(_ -> System.exit(0));
 
@@ -135,13 +135,6 @@ public class MenuBar
 
 		// Show the dialog with custom icon and editor pane
 		JOptionPane.showMessageDialog(parentFrame, new JScrollPane(editorPane), "About", JOptionPane.INFORMATION_MESSAGE, appIcon);
-	}
-
-	// Placeholder for loading a multisell file
-	private static void loadMultisell()
-	{
-		// Add logic to load the multisell data
-		System.out.println("Load Multisell...");
 	}
 
 	// Placeholder for saving a multisell file

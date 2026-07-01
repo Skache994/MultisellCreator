@@ -47,7 +47,7 @@ public class IngredientPanel extends JPanel
 		_ingredientsView = new JList<>(ingredient.getIngredientsModel());
 		_ingredientsView.setCellRenderer(new IngredientsListRenderer());
 
-		// 🔥 Add this to support item drop
+		// Add this to support item drop
 		_ingredientsView.setDropMode(DropMode.INSERT);
 		_ingredientsView.setTransferHandler(new ItemImportTransferHandler(ingredient, null, ItemType.INGREDIENT));
 

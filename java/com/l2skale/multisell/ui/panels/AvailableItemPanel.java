@@ -6,11 +6,11 @@ import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.Image;
-import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.function.Consumer;
 
 import javax.swing.AbstractAction;
 import javax.swing.BorderFactory;
@@ -34,11 +34,8 @@ import javax.swing.event.DocumentListener;
 
 import com.l2skale.multisell.managers.ThemeManager;
 import com.l2skale.multisell.model.AvailableItemList;
-import com.l2skale.multisell.model.IngredientList;
 import com.l2skale.multisell.model.Item;
-import com.l2skale.multisell.model.ProductList;
 import com.l2skale.multisell.ui.dnd.ItemExportTransferHandler;
-import com.l2skale.multisell.ui.panels.popup.DialogUtils;
 import com.l2skale.multisell.ui.renders.ItemListRenderer;
 import com.l2skale.multisell.ui.stylers.ContextMenuStyler;
 import com.l2skale.multisell.ui.utils.MessageUtils;
@@ -53,16 +50,16 @@ public class AvailableItemPanel extends JPanel
 	private static final long serialVersionUID = 1L;
 
 	private final AvailableItemList _availableItemsList;
-	private final IngredientList _ingredientList;
-	private final ProductList _productList;
+	private final Consumer<Item> _onAddIngredient;
+	private final Consumer<Item> _onAddProduct;
 	private JList<Item> _availableItemsView;
 	private JTextField _searchField;
 
-	public AvailableItemPanel(AvailableItemList item, IngredientList ingredient, ProductList product)
+	public AvailableItemPanel(AvailableItemList item, Consumer<Item> onAddIngredient, Consumer<Item> onAddProduct)
 	{
 		this._availableItemsList = item;
-		this._ingredientList = ingredient;
-		this._productList = product;
+		this._onAddIngredient = onAddIngredient;
+		this._onAddProduct = onAddProduct;
 		initialize();
 		createContextMenuToAvailableItems();
 	}
@@ -171,7 +168,7 @@ public class AvailableItemPanel extends JPanel
 		_availableItemsView = new JList<>(_availableItemsList.getModel());
 		_availableItemsView.setCellRenderer(new ItemListRenderer());
 
-		// 👉 Setup drag
+		// Setup drag
 		_availableItemsView.setDragEnabled(true);
 		_availableItemsView.setTransferHandler(new ItemExportTransferHandler());
 
@@ -275,12 +272,7 @@ public class AvailableItemPanel extends JPanel
 							Item selectedItem = _availableItemsView.getSelectedValue();
 							if (selectedItem != null)
 							{
-								Window parentWindow = SwingUtilities.getWindowAncestor(AvailableItemPanel.this);
-								Integer amount = DialogUtils.promptForAmount(parentWindow, selectedItem.getName());
-								if (amount != null)
-								{
-									_ingredientList.addAsIngredient(selectedItem, amount);
-								}
+								_onAddIngredient.accept(selectedItem);
 							}
 						});
 						itemMenu.add(addIngredientItem);
@@ -293,12 +285,7 @@ public class AvailableItemPanel extends JPanel
 							Item selectedItem = _availableItemsView.getSelectedValue();
 							if (selectedItem != null)
 							{
-								Window parentWindow = SwingUtilities.getWindowAncestor(AvailableItemPanel.this);
-								Integer amount = DialogUtils.promptForAmount(parentWindow, selectedItem.getName());
-								if (amount != null)
-								{
-									_productList.addAsProduct(selectedItem, amount);
-								}
+								_onAddProduct.accept(selectedItem);
 							}
 						});
 						itemMenu.add(addProductItem);

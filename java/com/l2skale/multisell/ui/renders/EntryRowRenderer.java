@@ -1,0 +1,124 @@
+package com.l2skale.multisell.ui.renders;
+
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.FlowLayout;
+import java.awt.Font;
+import java.util.function.IntFunction;
+
+import javax.swing.BorderFactory;
+import javax.swing.BoxLayout;
+import javax.swing.JLabel;
+import javax.swing.JList;
+import javax.swing.JPanel;
+import javax.swing.ListCellRenderer;
+
+import com.l2skale.multisell.model.Item;
+import com.l2skale.multisell.model.multisell.Entry;
+import com.l2skale.multisell.model.multisell.MultisellItem;
+
+/*
+ * Renders one multisell entry as a row, game style: the product first (the
+ * headline), then "requires", then the ingredient slots (the cost). Items show
+ * as bordered icon slots with the count beside them and the name on hover.
+ *
+ * @author Skache
+ */
+public class EntryRowRenderer extends JPanel implements ListCellRenderer<Entry>
+{
+	private static final long serialVersionUID = 1L;
+	private static final int PRODUCT_SLOT = 40;
+	private static final int INGREDIENT_SLOT = 32;
+
+	private IntFunction<Item> _itemLookup;
+
+	public EntryRowRenderer()
+	{
+		setLayout(new FlowLayout(FlowLayout.LEFT, 6, 4));
+		setBorder(BorderFactory.createEmptyBorder(2, 6, 2, 6));
+	}
+
+	public void setItemLookup(IntFunction<Item> itemLookup)
+	{
+		_itemLookup = itemLookup;
+	}
+
+	@Override
+	public Component getListCellRendererComponent(JList<? extends Entry> list, Entry entry, int index, boolean isSelected, boolean cellHasFocus)
+	{
+		removeAll();
+		setOpaque(true);
+		setBackground(RowColors.background(isSelected));
+
+		final Color fg = RowColors.foreground();
+
+		// Product(s) first - the headline of the entry.
+		for (MultisellItem product : entry.getProducts())
+		{
+			add(productChip(product, fg));
+		}
+
+		add(separator("  requires  ", fg));
+
+		// Ingredients - the cost.
+		for (MultisellItem ingredient : entry.getIngredients())
+		{
+			add(ingredientChip(ingredient, fg));
+		}
+
+		return this;
+	}
+
+	// Product: a bigger slot plus the item name in bold.
+	private JPanel productChip(MultisellItem multisellItem, Color fg)
+	{
+		final Item item = resolve(multisellItem.getItemId());
+		final JPanel chip = transparentRow();
+		chip.add(new ItemSlot(item, multisellItem.getItemId(), PRODUCT_SLOT));
+
+		String text = item != null ? item.getName() : ("id " + multisellItem.getItemId());
+		if (multisellItem.getCount() > 1)
+		{
+			text += "  x" + multisellItem.getCount();
+		}
+
+		final JLabel name = new JLabel(" " + text);
+		name.setFont(name.getFont().deriveFont(Font.BOLD));
+		name.setForeground(fg);
+		chip.add(name);
+		return chip;
+	}
+
+	// Ingredient: a slot plus "xCount".
+	private JPanel ingredientChip(MultisellItem multisellItem, Color fg)
+	{
+		final Item item = resolve(multisellItem.getItemId());
+		final JPanel chip = transparentRow();
+		chip.add(new ItemSlot(item, multisellItem.getItemId(), INGREDIENT_SLOT));
+
+		final JLabel count = new JLabel(" x" + multisellItem.getCount());
+		count.setForeground(fg);
+		chip.add(count);
+		return chip;
+	}
+
+	private JLabel separator(String text, Color fg)
+	{
+		final JLabel label = new JLabel(text);
+		label.setForeground(fg);
+		return label;
+	}
+
+	private JPanel transparentRow()
+	{
+		final JPanel panel = new JPanel();
+		panel.setLayout(new BoxLayout(panel, BoxLayout.X_AXIS));
+		panel.setOpaque(false);
+		return panel;
+	}
+
+	private Item resolve(int itemId)
+	{
+		return _itemLookup == null ? null : _itemLookup.apply(itemId);
+	}
+}
