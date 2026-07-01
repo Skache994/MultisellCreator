@@ -1,7 +1,6 @@
 package com.l2skale.multisell.ui;
 
 import java.awt.BorderLayout;
-import java.awt.FlowLayout;
 import java.io.File;
 
 import javax.swing.JButton;
@@ -11,24 +10,19 @@ import javax.swing.JPanel;
 import javax.swing.JSplitPane;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
-import com.l2skale.multisell.MultisellController;
 import com.l2skale.multisell.MultisellCreator;
 import com.l2skale.multisell.data.MultisellLoader;
 import com.l2skale.multisell.datapack.Datapack;
 import com.l2skale.multisell.managers.ItemManager;
 import com.l2skale.multisell.managers.ThemeManager;
 import com.l2skale.multisell.model.AvailableItemList;
-import com.l2skale.multisell.model.IngredientList;
 import com.l2skale.multisell.model.Item;
-import com.l2skale.multisell.model.MultisellList;
-import com.l2skale.multisell.model.ProductList;
 import com.l2skale.multisell.model.multisell.Entry;
 import com.l2skale.multisell.model.multisell.Multisell;
 import com.l2skale.multisell.model.multisell.MultisellItem;
 import com.l2skale.multisell.ui.panels.AvailableItemPanel;
 import com.l2skale.multisell.ui.panels.TrashBinPanel;
 import com.l2skale.multisell.ui.panels.popup.DialogUtils;
-import com.l2skale.multisell.ui.utils.ButtonFactory;
 import com.l2skale.multisell.ui.utils.MessageUtils;
 import com.l2skale.multisell.ui.utils.Sound;
 
@@ -39,10 +33,6 @@ public class Gui
 {
 	private final MultisellCreator _frame; // Main frame reference.
 	private final AvailableItemList _availableItemsList = new AvailableItemList();
-	private final IngredientList _ingredientList = new IngredientList();
-	private final ProductList _productList = new ProductList();
-	private final MultisellList _multisellList = new MultisellList();
-	private final MultisellController _controller;
 
 	private Datapack _datapack;
 	private ItemManager _itemManager;
@@ -54,7 +44,6 @@ public class Gui
 	public Gui(MultisellCreator frame)
 	{
 		this._frame = frame;
-		this._controller = new MultisellController(_ingredientList, _productList, _multisellList); // Initialize controller
 		initialize();
 	}
 
@@ -78,7 +67,7 @@ public class Gui
 
 		// Create the UI components.
 		createDualPanelLayout();
-		addButtons();
+		addBottomBar();
 	}
 
 	private void createDualPanelLayout()
@@ -100,19 +89,11 @@ public class Gui
 		_frame.add(splitPane, BorderLayout.CENTER);
 	}
 
-	private void addButtons()
+	private void addBottomBar()
 	{
-		// Buttons centered.
-		JPanel buttons = new JPanel(new FlowLayout(FlowLayout.CENTER));
-		buttons.add(ButtonFactory.createButton("New Item", _ -> _controller.createNewItem(_frame)));
-		buttons.add(ButtonFactory.createButton("Save", _ -> _controller.saveMultisell()));
-		buttons.add(ButtonFactory.createButton("Clear", _ -> _controller.clearLists()));
-
-		// Bottom bar: buttons in the middle, trash bin on the right.
+		// Bottom bar: trash bin on the right (New Entry / Save come next).
 		JPanel southPanel = new JPanel(new BorderLayout());
-		southPanel.add(buttons, BorderLayout.CENTER);
 		southPanel.add(new TrashBinPanel(), BorderLayout.EAST);
-
 		_frame.add(southPanel, BorderLayout.SOUTH);
 	}
 
