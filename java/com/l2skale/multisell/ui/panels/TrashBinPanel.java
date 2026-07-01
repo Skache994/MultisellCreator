@@ -76,6 +76,4 @@ public class TrashBinPanel extends JPanel
 		setLayout(new FlowLayout(FlowLayout.CENTER));
 		add(_trashBin);
 	}
-
-	// You can add any additional methods or customization here as needed
 }

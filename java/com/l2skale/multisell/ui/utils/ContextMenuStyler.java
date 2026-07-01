@@ -1,4 +1,4 @@
-package com.l2skale.multisell.ui.stylers;
+package com.l2skale.multisell.ui.utils;
 
 import java.awt.Color;
 import java.awt.Font;

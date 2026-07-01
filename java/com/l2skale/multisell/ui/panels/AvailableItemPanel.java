@@ -37,7 +37,7 @@ import com.l2skale.multisell.model.AvailableItemList;
 import com.l2skale.multisell.model.Item;
 import com.l2skale.multisell.ui.dnd.ItemExportTransferHandler;
 import com.l2skale.multisell.ui.renders.ItemListRenderer;
-import com.l2skale.multisell.ui.stylers.ContextMenuStyler;
+import com.l2skale.multisell.ui.utils.ContextMenuStyler;
 import com.l2skale.multisell.ui.utils.MessageUtils;
 import com.l2skale.multisell.ui.utils.ResourceIcons;
 import com.l2skale.multisell.ui.utils.Sound;

@@ -22,7 +22,7 @@ import com.l2skale.multisell.model.multisell.Multisell;
 import com.l2skale.multisell.model.multisell.MultisellItem;
 import com.l2skale.multisell.ui.panels.AvailableItemPanel;
 import com.l2skale.multisell.ui.panels.TrashBinPanel;
-import com.l2skale.multisell.ui.panels.popup.DialogUtils;
+import com.l2skale.multisell.ui.utils.DialogUtils;
 import com.l2skale.multisell.ui.utils.MessageUtils;
 import com.l2skale.multisell.ui.utils.Sound;
 
