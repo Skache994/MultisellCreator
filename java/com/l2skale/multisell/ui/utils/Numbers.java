@@ -50,6 +50,13 @@ public final class Numbers
 		return FORMAT.format(value);
 	}
 
+	// The display convention for item counts: 1000 -> " (1.000)", but 1 (or less) -> ""
+	// (a single item needs no count). Shared by every place that shows an item count.
+	public static String countSuffix(long count)
+	{
+		return count > 1 ? " (" + format(count) + ")" : "";
+	}
+
 	// "1.000.000" or "1000000" -> 1000000 (any non-digit separators are ignored).
 	public static int parse(String text)
 	{

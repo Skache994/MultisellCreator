@@ -21,54 +21,47 @@
  */
 package com.l2skale.multisell.ui;
 
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.Insets;
+import java.awt.BorderLayout;
 
 import javax.swing.JPanel;
+import javax.swing.JSplitPane;
 
 import com.l2skale.multisell.ui.panels.EntriesPanel;
 import com.l2skale.multisell.ui.panels.EntrySidePanel;
 
 /*
+ * Lays the editor out like the game's Store window: the Entries list on the left
+ * (the game's "List"), and the selected entry's Products over Ingredients on the
+ * right (the game's "Item Information" over "Required Items").
+ *
  * @author Skache
  */
 public class RightPanel extends JPanel
 {
 	private static final long serialVersionUID = 1L;
 
-	// Editor (top): the selected entry's two lists.
+	// The selected entry's two lists: Products (top) over Ingredients (bottom), game order.
 	private final EntrySidePanel _ingredientsPanel = new EntrySidePanel("Ingredients");
 	private final EntrySidePanel _productsPanel = new EntrySidePanel("Products");
 
-	// The whole multisell (bottom).
+	// The whole multisell - the game's "List".
 	private final EntriesPanel _entriesPanel = new EntriesPanel();
 
 	public RightPanel()
 	{
-		setLayout(new GridBagLayout());
-		GridBagConstraints gbc = new GridBagConstraints();
-		gbc.fill = GridBagConstraints.BOTH;
-		gbc.insets = new Insets(5, 5, 5, 5);
+		setLayout(new BorderLayout());
 
-		gbc.gridx = 0;
-		gbc.gridy = 0;
-		gbc.weightx = 0.5;
-		gbc.weighty = 0.6;
-		add(_ingredientsPanel, gbc);
+		// Right side: Products on top, Ingredients on the bottom (Item Information over Required Items).
+		final JSplitPane detailSplit = new JSplitPane(JSplitPane.VERTICAL_SPLIT, _productsPanel, _ingredientsPanel);
+		detailSplit.setResizeWeight(0.5);
+		detailSplit.setContinuousLayout(true);
 
-		gbc.gridx = 1;
-		gbc.gridy = 0;
-		gbc.weightx = 0.5;
-		gbc.weighty = 0.6;
-		add(_productsPanel, gbc);
+		// Entries (the "List") on the left, the selected entry's detail on the right.
+		final JSplitPane mainSplit = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, _entriesPanel, detailSplit);
+		mainSplit.setResizeWeight(0.5);
+		mainSplit.setContinuousLayout(true);
 
-		gbc.gridx = 0;
-		gbc.gridy = 1;
-		gbc.gridwidth = 2;
-		gbc.weightx = 1.0;
-		gbc.weighty = 1.0;
-		add(_entriesPanel, gbc);
+		add(mainSplit, BorderLayout.CENTER);
 	}
 
 	public EntrySidePanel getIngredientsPanel()

@@ -73,7 +73,7 @@ public class MultisellItemRenderer extends JPanel implements ListCellRenderer<Mu
 		add(new ItemSlot(item, value.getItemId(), SLOT));
 
 		final String name = item != null ? item.getName() : ("id " + value.getItemId());
-		final JLabel label = new JLabel(name + "   x" + Numbers.format(value.getCount()));
+		final JLabel label = new JLabel(name + Numbers.countSuffix(value.getCount()));
 		label.setForeground(fg);
 		add(label);
 

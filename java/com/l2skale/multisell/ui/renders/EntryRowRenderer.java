@@ -99,10 +99,7 @@ public class EntryRowRenderer extends JPanel implements ListCellRenderer<Entry>
 		chip.add(new ItemSlot(item, multisellItem.getItemId(), PRODUCT_SLOT));
 
 		String text = item != null ? item.getName() : ("id " + multisellItem.getItemId());
-		if (multisellItem.getCount() > 1)
-		{
-			text += "  x" + Numbers.format(multisellItem.getCount());
-		}
+		text += Numbers.countSuffix(multisellItem.getCount());
 
 		final JLabel name = new JLabel(" " + text);
 		name.setFont(name.getFont().deriveFont(Font.BOLD));
@@ -118,7 +115,7 @@ public class EntryRowRenderer extends JPanel implements ListCellRenderer<Entry>
 		final JPanel chip = transparentRow();
 		chip.add(new ItemSlot(item, multisellItem.getItemId(), INGREDIENT_SLOT));
 
-		final JLabel count = new JLabel(" x" + Numbers.format(multisellItem.getCount()));
+		final JLabel count = new JLabel(Numbers.countSuffix(multisellItem.getCount()));
 		count.setForeground(fg);
 		chip.add(count);
 		return chip;
