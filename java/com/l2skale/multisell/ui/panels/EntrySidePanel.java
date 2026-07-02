@@ -26,6 +26,7 @@ import java.awt.Font;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.List;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.IntFunction;
 
@@ -59,6 +60,8 @@ public class EntrySidePanel extends JPanel
 
 	private Consumer<MultisellItem> _onRemove;
 	private Consumer<MultisellItem> _onEditAmount;
+	private Consumer<MultisellItem> _onMoveUp;
+	private Consumer<MultisellItem> _onMoveDown;
 
 	public EntrySidePanel(String title)
 	{
@@ -87,6 +90,22 @@ public class EntrySidePanel extends JPanel
 		_onEditAmount = onEditAmount;
 	}
 
+	public void setOnMoveUp(Consumer<MultisellItem> onMoveUp)
+	{
+		_onMoveUp = onMoveUp;
+	}
+
+	public void setOnMoveDown(Consumer<MultisellItem> onMoveDown)
+	{
+		_onMoveDown = onMoveDown;
+	}
+
+	// Reselect an item after it has moved, so it stays highlighted.
+	public void selectItem(MultisellItem item)
+	{
+		_view.setSelectedValue(item, true);
+	}
+
 	// Show the given items; itemLookup resolves ids to Items for icons/names.
 	public void setItems(List<MultisellItem> items, IntFunction<Item> itemLookup)
 	{
@@ -110,13 +129,14 @@ public class EntrySidePanel extends JPanel
 		_view.setHint(hint);
 	}
 
-	// Allow items dragged from the item list to be dropped here, and allow the
-	// list's own items to be dragged out (e.g. onto the trash bin).
-	public void enableItemDrop(Consumer<Item> onDrop)
+	// Allow items dragged from the item list to be dropped here (onDrop), the list's own
+	// items to be dragged out (e.g. onto the trash bin), and rows to be reordered by
+	// dragging within the list (onReorder is given the source and target indices).
+	public void enableItemDrop(Consumer<Item> onDrop, BiConsumer<Integer, Integer> onReorder)
 	{
 		_view.setDragEnabled(true);
-		_view.setDropMode(DropMode.ON);
-		_view.setTransferHandler(new AddItemTransferHandler(_view, onDrop));
+		_view.setDropMode(DropMode.INSERT);
+		_view.setTransferHandler(new AddItemTransferHandler(_view, onDrop, onReorder));
 	}
 
 	private void installContextMenu()
@@ -176,6 +196,31 @@ public class EntrySidePanel extends JPanel
 		}
 
 		final JPopupMenu menu = new JPopupMenu();
+
+		final JMenuItem moveUp = new JMenuItem("Move Up");
+		moveUp.setEnabled(index > 0);
+		moveUp.addActionListener(_ ->
+		{
+			if (_onMoveUp != null)
+			{
+				_onMoveUp.accept(selected);
+			}
+		});
+		menu.add(moveUp);
+
+		final JMenuItem moveDown = new JMenuItem("Move Down");
+		moveDown.setEnabled(index < (_model.getSize() - 1));
+		moveDown.addActionListener(_ ->
+		{
+			if (_onMoveDown != null)
+			{
+				_onMoveDown.accept(selected);
+			}
+		});
+		menu.add(moveDown);
+
+		menu.addSeparator();
+
 		final JMenuItem remove = new JMenuItem("Remove");
 		remove.addActionListener(_ ->
 		{

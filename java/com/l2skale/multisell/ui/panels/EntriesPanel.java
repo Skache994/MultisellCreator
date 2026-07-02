@@ -26,10 +26,12 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.IntFunction;
 
 import javax.swing.DefaultListModel;
+import javax.swing.DropMode;
 import javax.swing.JLabel;
 import javax.swing.JMenuItem;
 import javax.swing.JPanel;
@@ -61,6 +63,8 @@ public class EntriesPanel extends JPanel
 	private Multisell _multisell;
 	private Consumer<Entry> _onDuplicate;
 	private Consumer<Entry> _onDelete;
+	private Consumer<Entry> _onMoveUp;
+	private Consumer<Entry> _onMoveDown;
 
 	public EntriesPanel()
 	{
@@ -87,6 +91,16 @@ public class EntriesPanel extends JPanel
 	public void setOnDelete(Consumer<Entry> onDelete)
 	{
 		_onDelete = onDelete;
+	}
+
+	public void setOnMoveUp(Consumer<Entry> onMoveUp)
+	{
+		_onMoveUp = onMoveUp;
+	}
+
+	public void setOnMoveDown(Consumer<Entry> onMoveDown)
+	{
+		_onMoveDown = onMoveDown;
 	}
 
 	// Select an entry in the list (used after duplicating).
@@ -135,11 +149,13 @@ public class EntriesPanel extends JPanel
 		_title.setText("Entries  -  multisell " + id + "  (" + _model.getSize() + ")");
 	}
 
-	// Allow entries to be dragged out of the list (e.g. onto the trash bin).
-	public void enableEntryDrag()
+	// Allow entries to be dragged out of the list (e.g. onto the trash bin) and to be
+	// reordered by dragging within the list (onReorder is given the source and target indices).
+	public void enableEntryDrag(BiConsumer<Integer, Integer> onReorder)
 	{
 		_view.setDragEnabled(true);
-		_view.setTransferHandler(new ListExportTransferHandler(_view));
+		_view.setDropMode(DropMode.INSERT);
+		_view.setTransferHandler(new ListExportTransferHandler(_view, onReorder));
 	}
 
 	// Tell the list that one entry changed so its row is re-rendered.
@@ -191,6 +207,30 @@ public class EntriesPanel extends JPanel
 		}
 
 		final JPopupMenu menu = new JPopupMenu();
+
+		final JMenuItem moveUp = new JMenuItem("Move Up");
+		moveUp.setEnabled(index > 0);
+		moveUp.addActionListener(_ ->
+		{
+			if (_onMoveUp != null)
+			{
+				_onMoveUp.accept(selected);
+			}
+		});
+		menu.add(moveUp);
+
+		final JMenuItem moveDown = new JMenuItem("Move Down");
+		moveDown.setEnabled(index < (_model.getSize() - 1));
+		moveDown.addActionListener(_ ->
+		{
+			if (_onMoveDown != null)
+			{
+				_onMoveDown.accept(selected);
+			}
+		});
+		menu.add(moveDown);
+
+		menu.addSeparator();
 
 		final JMenuItem duplicate = new JMenuItem("Duplicate");
 		duplicate.addActionListener(_ ->

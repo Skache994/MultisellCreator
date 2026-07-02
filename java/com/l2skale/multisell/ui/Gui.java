@@ -27,6 +27,7 @@ import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.io.File;
+import java.util.List;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
@@ -129,13 +130,19 @@ public class Gui
 		_rightPanel.getEntriesPanel().addSelectionListener(this::showEntryInEditor);
 		_rightPanel.getIngredientsPanel().setOnRemove(this::delete);
 		_rightPanel.getProductsPanel().setOnRemove(this::delete);
-		_rightPanel.getIngredientsPanel().enableItemDrop(item -> addItemToSelected(true, item));
-		_rightPanel.getProductsPanel().enableItemDrop(item -> addItemToSelected(false, item));
+		_rightPanel.getIngredientsPanel().enableItemDrop(item -> addItemToSelected(true, item), (from, to) -> reorderItem(true, from, to));
+		_rightPanel.getProductsPanel().enableItemDrop(item -> addItemToSelected(false, item), (from, to) -> reorderItem(false, from, to));
 		_rightPanel.getIngredientsPanel().setOnEditAmount(this::editAmount);
 		_rightPanel.getProductsPanel().setOnEditAmount(this::editAmount);
-		_rightPanel.getEntriesPanel().enableEntryDrag();
+		_rightPanel.getIngredientsPanel().setOnMoveUp(item -> moveItem(true, item, -1));
+		_rightPanel.getIngredientsPanel().setOnMoveDown(item -> moveItem(true, item, 1));
+		_rightPanel.getProductsPanel().setOnMoveUp(item -> moveItem(false, item, -1));
+		_rightPanel.getProductsPanel().setOnMoveDown(item -> moveItem(false, item, 1));
+		_rightPanel.getEntriesPanel().enableEntryDrag((from, to) -> reorderEntry(from, to));
 		_rightPanel.getEntriesPanel().setOnDuplicate(this::duplicateEntry);
 		_rightPanel.getEntriesPanel().setOnDelete(this::delete);
+		_rightPanel.getEntriesPanel().setOnMoveUp(entry -> moveEntry(entry, -1));
+		_rightPanel.getEntriesPanel().setOnMoveDown(entry -> moveEntry(entry, 1));
 
 		// Set up the split pane (holds the 4 lists) with an explicit outer border.
 		_splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, leftPanel, _rightPanel);
@@ -486,6 +493,83 @@ public class Gui
 
 		_rightPanel.getEntriesPanel().setMultisell(_multisell, _itemManager::getItemById);
 		_rightPanel.getEntriesPanel().selectEntry(copy);
+	}
+
+	// Right-click Move Up (-1) / Move Down (+1): just a reorder to the neighbouring position.
+	private void moveEntry(Entry entry, int delta)
+	{
+		final int from = (_multisell == null) ? -1 : _multisell.getEntries().indexOf(entry);
+		reorderEntry(from, from + delta);
+	}
+
+	// Move an entry from one position to another (menu or drag). This is its line order in the XML.
+	private void reorderEntry(int from, int to)
+	{
+		if (_multisell == null)
+		{
+			return;
+		}
+
+		final Entry moved = moveTo(_multisell.getEntries(), from, to);
+		if (moved != null)
+		{
+			_rightPanel.getEntriesPanel().setMultisell(_multisell, _itemManager::getItemById);
+			_rightPanel.getEntriesPanel().selectEntry(moved);
+		}
+	}
+
+	// Right-click Move Up (-1) / Move Down (+1) for an ingredient or product.
+	private void moveItem(boolean ingredient, MultisellItem item, int delta)
+	{
+		if (_selectedEntry == null)
+		{
+			return;
+		}
+
+		final int from = itemList(ingredient).indexOf(item);
+		reorderItem(ingredient, from, from + delta);
+	}
+
+	// Move an ingredient or product from one position to another (menu or drag).
+	private void reorderItem(boolean ingredient, int from, int to)
+	{
+		if (_selectedEntry == null)
+		{
+			return;
+		}
+
+		final MultisellItem moved = moveTo(itemList(ingredient), from, to);
+		if (moved != null)
+		{
+			refreshAfterEdit();
+			(ingredient ? _rightPanel.getIngredientsPanel() : _rightPanel.getProductsPanel()).selectItem(moved);
+		}
+	}
+
+	private List<MultisellItem> itemList(boolean ingredient)
+	{
+		return ingredient ? _selectedEntry.getIngredients() : _selectedEntry.getProducts();
+	}
+
+	// The one reorder operation, shared by the right-click menu and drag-and-drop: take the
+	// element at 'from' and put it at index 'to'. 'to' is clamped; a no-op still returns the
+	// element so the moved row stays selected. Returns null only if 'from' is invalid.
+	private static <T> T moveTo(List<T> list, int from, int to)
+	{
+		if ((from < 0) || (from >= list.size()))
+		{
+			return null;
+		}
+
+		final int target = Math.max(0, Math.min(to, list.size() - 1));
+		if (target == from)
+		{
+			return list.get(from);
+		}
+
+		final T element = list.remove(from);
+		list.add(target, element);
+		return element;
 	}
 
 	// Add an item (asking for an amount) as an ingredient or product of the selected entry.
