@@ -1,16 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project name="MultisellCreator" default="package" basedir=".">
+<project name="MultisellCreator" default="cleanup" basedir=".">
 	<description>
 		MultisellCreator - a GUI tool to create L2J Mobius multisell XML files.
 		Author: Skache
 	</description>
 
-	<!-- Build output lives OUTSIDE the project, in a sibling "release" folder. -->
+	<!-- The build workspace lives OUTSIDE the project, in a sibling "release" folder.
+	     The one and only deliverable is release/MultisellCreator.zip - everything else
+	     (compile output, assembled files) is scratch that gets deleted at the end. -->
 	<property name="src" location="java" />
 	<property name="resources" location="resources" />
 	<property name="launcher" location="launcher" />
+	<property name="data" location="data" />
 	<property name="release" location="../release" />
 	<property name="classes" location="${release}/classes" />
+	<property name="staging" location="${release}/staging" />
+	<property name="zipfile" location="${release}/MultisellCreator.zip" />
 	<property name="main.class" value="com.l2skale.multisell.MultisellCreator" />
 
 	<target name="checkRequirements" description="Check requirements.">
@@ -18,24 +23,26 @@
 		<fail unless="JDK25.present" message="Java 25 is required, but your version is Java ${ant.java.version}." />
 	</target>
 
-	<target name="init" depends="checkRequirements" description="Create output directories.">
+	<target name="init" depends="checkRequirements" description="Create the scratch directories.">
 		<delete dir="${classes}" quiet="true" />
+		<delete dir="${staging}" quiet="true" />
 		<mkdir dir="${classes}" />
+		<mkdir dir="${staging}" />
 	</target>
 
 	<target name="compile" depends="init" description="Compile the source.">
 		<javac srcdir="${src}" destdir="${classes}" compiler="modern" debug="true" debuglevel="lines,vars,source" includeantruntime="false" source="25" target="25" encoding="UTF-8" />
-		<!-- Copy bundled app resources (images, sounds, splash) into the classpath root. -->
+		<!-- Bundle app resources (images, sounds, splash) into the classpath root, so they end up inside the jar. -->
 		<copy todir="${classes}">
 			<fileset dir="${resources}" />
 		</copy>
 	</target>
 
-	<target name="jar" depends="compile" description="Create the runnable jar.">
+	<target name="jar" depends="compile" description="Create the runnable jar into staging.">
 		<tstamp>
 			<format property="time.stamp" pattern="yyyy-MM-dd HH:mm:ss z" />
 		</tstamp>
-		<jar destfile="${release}/MultisellCreator.jar" basedir="${classes}" level="9">
+		<jar destfile="${staging}/MultisellCreator.jar" basedir="${classes}" level="9">
 			<manifest>
 				<attribute name="Build-By" value="${user.name}" />
 				<attribute name="Build-Date" value="${time.stamp}" />
@@ -45,13 +52,23 @@
 		</jar>
 	</target>
 
-	<target name="package" depends="jar" description="Assemble the runnable release (jar + launcher).">
-		<copy todir="${release}">
-			<fileset dir="${launcher}" />
-		</copy>
+	<target name="zip" depends="jar" description="Bundle the final product: MultisellCreator.zip.">
+		<delete file="${zipfile}" quiet="true" />
+		<!-- Everything is placed under a top-level MultisellCreator/ folder so it extracts tidily.
+		     The jar comes from staging; the launcher and item icons are pulled straight from source. -->
+		<zip destfile="${zipfile}" level="9">
+			<zipfileset dir="${staging}" prefix="MultisellCreator" includes="MultisellCreator.jar" />
+			<zipfileset dir="${launcher}" prefix="MultisellCreator" />
+			<zipfileset dir="${data}" prefix="MultisellCreator/data" />
+		</zip>
 	</target>
 
-	<target name="clean" description="Remove build output.">
+	<target name="cleanup" depends="zip" description="Delete all scratch so only the zip remains.">
+		<delete dir="${staging}" />
+		<delete dir="${classes}" />
+	</target>
+
+	<target name="clean" description="Remove the entire build workspace.">
 		<delete dir="${release}" quiet="true" />
 	</target>
 </project>

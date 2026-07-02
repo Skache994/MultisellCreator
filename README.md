@@ -25,7 +25,13 @@ trade, set amounts, and export a clean, server-ready multisell XML - no hand-edi
 - Java 25
 - [Apache Ant](https://ant.apache.org/) (to build - bundled with Eclipse, or install standalone for command-line builds)
 
-## Build & Run
+## Download
+
+Grab the latest `MultisellCreator.zip` from the
+[Releases](https://github.com/Skache994/MultisellCreator/releases) page, unzip it,
+and double-click **`MultisellCreator.vbs`**. (Java 25 must be installed.)
+
+## Build from source
 
 **In Eclipse:** right-click `build.xml` -> **Run As -> Ant Build**.
 
@@ -35,14 +41,8 @@ trade, set amounts, and export a clean, server-ready multisell XML - no hand-edi
 ant
 ```
 
-Either way, the build creates a `release/` folder **next to** the project folder
-(one level up), containing `MultisellCreator.jar` and a Windows launcher. Run it with:
-
-```bash
-java -jar ../release/MultisellCreator.jar
-```
-
-On Windows, just double-click `MultisellCreator.bat` in that `release/` folder.
+The build produces a single `MultisellCreator.zip` in a `release/` folder next to the
+project (one level up). Unzip it and double-click `MultisellCreator.vbs` to run.
 
 ## Usage
 
