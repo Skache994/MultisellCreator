@@ -4,7 +4,6 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.swing.ImageIcon;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
@@ -23,9 +22,7 @@ public class ItemLoader
 	private final String itemsFolderPath;
 	private final String iconsFolderPath;
 
-	private static String ICON_PATH = "data/icons/NOIMAGE.png";
-
-	// Constructor to initialize paths and IconLoader.
+	// Constructor to initialize paths.
 	public ItemLoader(String itemsFolderPath, String iconsFolderPath)
 	{
 		this.itemsFolderPath = itemsFolderPath;
@@ -83,20 +80,10 @@ public class ItemLoader
 					String name = element.getAttribute("name");
 					String type = element.getAttribute("type");
 					String iconName = getIconNameFromElement(element);
-
-					// Load the icon as an ImageIcon.
-					ImageIcon icon = loadIcon(iconName);
-					if (icon == null)
-					{
-						System.err.println("Missing icon for item " + id + " (" + name + "). Skipping, using default icon.");
-						icon = getDefaultIcon();
-					}
-
-					// Check if the item is a quest item.
 					boolean isQuestItem = getIsQuestItemFromElement(element);
 
-					// Create the Item object with isQuestItem field.
-					items.add(new Item(id, name, type, icon, isQuestItem));
+					// The icon is loaded lazily by Item on first use.
+					items.add(new Item(id, name, type, isQuestItem, iconName, iconsFolderPath));
 				}
 			}
 		}
@@ -128,21 +115,6 @@ public class ItemLoader
 		return null;
 	}
 
-	// Directly load the icon from the icons folder
-	private ImageIcon loadIcon(String iconName)
-	{
-		if (iconName == null || iconName.isEmpty())
-		{
-			return null;
-		}
-
-		String iconFileName = iconName.replace("icon.", "") + ".png";
-		String iconPath = iconsFolderPath + File.separator + iconFileName;
-		File iconFile = new File(iconPath);
-
-		return iconFile.exists() ? new ImageIcon(iconPath) : null;
-	}
-
 	// Extracts whether the item is a quest item from an XML element.
 	private boolean getIsQuestItemFromElement(Element element)
 	{
@@ -161,19 +133,5 @@ public class ItemLoader
 		}
 
 		return false; // Default value (if missing, it's false).
-	}
-
-	// Default icon if the actual icon is missing.
-	public ImageIcon getDefaultIcon()
-	{
-		File iconFile = new File(ICON_PATH);
-
-		if (!iconFile.exists())
-		{
-			System.err.println("Default icon not found at path: " + ICON_PATH);
-			return new ImageIcon();
-		}
-
-		return new ImageIcon(iconFile.getAbsolutePath());
 	}
 }
