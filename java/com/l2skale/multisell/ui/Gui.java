@@ -165,7 +165,7 @@ public class Gui
 	private void openDatapack()
 	{
 		final JFileChooser chooser = new JFileChooser();
-		chooser.setDialogTitle("Select server datapack folder");
+		chooser.setDialogTitle("Select the server 'game' folder (or its 'data' folder)");
 		chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
 		if (chooser.showOpenDialog(_frame) != JFileChooser.APPROVE_OPTION)
 		{
@@ -175,7 +175,7 @@ public class Gui
 		final Datapack datapack = new Datapack(chooser.getSelectedFile());
 		if (!datapack.isValid())
 		{
-			MessageUtils.showErrorMessage(_frame, "That folder is not a valid datapack.\nExpected to find: " + datapack.getItemsDir(), "Invalid datapack");
+			MessageUtils.showErrorMessage(_frame, "That folder is not a valid datapack.\nPick the server 'game' folder or its 'data' folder (must contain data/stats/items).", "Invalid datapack");
 			return;
 		}
 

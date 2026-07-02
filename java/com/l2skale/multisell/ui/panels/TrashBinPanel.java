@@ -6,7 +6,9 @@ import java.awt.datatransfer.Transferable;
 import java.awt.dnd.DnDConstants;
 import java.awt.dnd.DropTarget;
 import java.awt.dnd.DropTargetAdapter;
+import java.awt.dnd.DropTargetDragEvent;
 import java.awt.dnd.DropTargetDropEvent;
+import java.awt.dnd.DropTargetEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.function.Consumer;
@@ -48,7 +50,7 @@ public class TrashBinPanel extends JPanel
 		// Create JLabel for the trash bin
 		_trashBin = new JLabel(_trashIcon);
 		_trashBin.setHorizontalAlignment(JLabel.CENTER);
-		_trashBin.setPreferredSize(new Dimension(64, 64));
+		_trashBin.setPreferredSize(new Dimension(36, 36));
 
 		// Add MouseListener to change the icon on hover and drag
 		_trashBin.addMouseListener(new MouseAdapter()
@@ -85,6 +87,19 @@ public class TrashBinPanel extends JPanel
 		new DropTarget(_trashBin, new DropTargetAdapter()
 		{
 			@Override
+			public void dragEnter(DropTargetDragEvent event)
+			{
+				// An item is being dragged onto the bin - show the "open" icon.
+				_trashBin.setIcon(_trashIconDrag);
+			}
+
+			@Override
+			public void dragExit(DropTargetEvent event)
+			{
+				_trashBin.setIcon(_trashIcon);
+			}
+
+			@Override
 			public void drop(DropTargetDropEvent event)
 			{
 				try
@@ -100,14 +115,21 @@ public class TrashBinPanel extends JPanel
 						}
 						Sound.playSound("trash_basket.wav");
 						event.dropComplete(true);
-						return;
+					}
+					else
+					{
+						event.rejectDrop();
 					}
 				}
 				catch (Exception e)
 				{
 					e.printStackTrace();
+					event.rejectDrop();
 				}
-				event.rejectDrop();
+				finally
+				{
+					_trashBin.setIcon(_trashIcon);
+				}
 			}
 		});
 
