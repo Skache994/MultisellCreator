@@ -25,6 +25,7 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.FlowLayout;
 import java.awt.Font;
+import java.util.List;
 import java.util.function.IntFunction;
 
 import javax.swing.BorderFactory;
@@ -50,7 +51,6 @@ public class EntryRowRenderer extends JPanel implements ListCellRenderer<Entry>
 {
 	private static final long serialVersionUID = 1L;
 	private static final int PRODUCT_SLOT = 40;
-	private static final int INGREDIENT_SLOT = 32;
 
 	private IntFunction<Item> _itemLookup;
 
@@ -74,21 +74,40 @@ public class EntryRowRenderer extends JPanel implements ListCellRenderer<Entry>
 
 		final Color fg = RowColors.foreground();
 
-		// Product(s) first - the headline of the entry.
-		for (MultisellItem product : entry.getProducts())
+		// Entry number, starting at 1 - matches the entry's position in the list.
+		add(indexLabel(index + 1, fg));
+
+		// The entry is identified by its first product - like the game's "List", which shows
+		// one item per row. The remaining products and the cost appear in the Products and
+		// Ingredients panels when the row is selected.
+		final List<MultisellItem> products = entry.getProducts();
+		if (products.isEmpty())
 		{
-			add(productChip(product, fg));
+			add(emptyLabel(fg));
 		}
-
-		add(separator("  requires  ", fg));
-
-		// Ingredients - the cost.
-		for (MultisellItem ingredient : entry.getIngredients())
+		else
 		{
-			add(ingredientChip(ingredient, fg));
+			add(productChip(products.get(0), fg));
 		}
 
 		return this;
+	}
+
+	// The entry's position, in a slightly smaller font.
+	private JLabel indexLabel(int number, Color fg)
+	{
+		final JLabel label = new JLabel(number + ".");
+		label.setForeground(fg);
+		label.setFont(label.getFont().deriveFont(Font.PLAIN, label.getFont().getSize2D() - 2f));
+		return label;
+	}
+
+	// A freshly added entry has no product yet; show a hint instead of a blank row.
+	private JLabel emptyLabel(Color fg)
+	{
+		final JLabel label = new JLabel("(empty entry - add a product)");
+		label.setForeground(fg);
+		return label;
 	}
 
 	// Product: a bigger slot plus the item name in bold.
@@ -106,26 +125,6 @@ public class EntryRowRenderer extends JPanel implements ListCellRenderer<Entry>
 		name.setForeground(fg);
 		chip.add(name);
 		return chip;
-	}
-
-	// Ingredient: a slot plus "xCount".
-	private JPanel ingredientChip(MultisellItem multisellItem, Color fg)
-	{
-		final Item item = resolve(multisellItem.getItemId());
-		final JPanel chip = transparentRow();
-		chip.add(new ItemSlot(item, multisellItem.getItemId(), INGREDIENT_SLOT));
-
-		final JLabel count = new JLabel(Numbers.countSuffix(multisellItem.getCount()));
-		count.setForeground(fg);
-		chip.add(count);
-		return chip;
-	}
-
-	private JLabel separator(String text, Color fg)
-	{
-		final JLabel label = new JLabel(text);
-		label.setForeground(fg);
-		return label;
 	}
 
 	private JPanel transparentRow()
