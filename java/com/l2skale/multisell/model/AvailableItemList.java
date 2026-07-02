@@ -1,5 +1,7 @@
 package com.l2skale.multisell.model;
 
+import java.util.Collection;
+
 import javax.swing.DefaultListModel;
 
 /*
@@ -23,6 +25,12 @@ public class AvailableItemList
 	public void addItem(Item item)
 	{
 		_availableItemList.addElement(item);
+	}
+
+	// Add many items at once (a single list event - much faster than adding one by one).
+	public void addItems(Collection<Item> items)
+	{
+		_availableItemList.addAll(items);
 	}
 
 	// Remove all items from the list.

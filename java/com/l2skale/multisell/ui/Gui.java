@@ -1,6 +1,7 @@
 package com.l2skale.multisell.ui;
 
 import java.awt.BorderLayout;
+import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.io.File;
@@ -14,6 +15,7 @@ import javax.swing.JPanel;
 import javax.swing.JSeparator;
 import javax.swing.JSplitPane;
 import javax.swing.SwingConstants;
+import javax.swing.SwingWorker;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
 import com.l2skale.multisell.MultisellCreator;
@@ -146,19 +148,40 @@ public class Gui
 		_frame.add(southPanel, BorderLayout.SOUTH);
 	}
 
-	// (Re)load the available items from the given item and icon folders.
-	private int loadItems(File itemsDir, File iconsDir)
+	// Load the available items off the UI thread so a big datapack does not freeze the app.
+	private void loadItemsAsync(File itemsDir, File iconsDir, Datapack datapack)
 	{
-		_availableItemsList.clear();
+		_frame.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
 
-		_itemManager = new ItemManager(itemsDir.getPath(), iconsDir.getPath());
-		_itemManager.loadItems();
-		for (Item item : _itemManager.getAllItems().values())
+		new SwingWorker<Integer, Void>()
 		{
-			_availableItemsList.addItem(item);
-		}
+			@Override
+			protected Integer doInBackground()
+			{
+				_itemManager = new ItemManager(itemsDir.getPath(), iconsDir.getPath());
+				_itemManager.loadItems();
+				return _itemManager.getAllItems().size();
+			}
 
-		return _itemManager.getAllItems().size();
+			@Override
+			protected void done()
+			{
+				try
+				{
+					_availableItemsList.clear();
+					_availableItemsList.addItems(_itemManager.getAllItems().values());
+					MessageUtils.showInfoMessage(_frame, "Loaded " + get() + " items from:\n" + datapack, "Datapack loaded");
+				}
+				catch (Exception e)
+				{
+					MessageUtils.showErrorMessage(_frame, "Could not load items:\n" + e.getMessage(), "Load failed");
+				}
+				finally
+				{
+					_frame.setCursor(Cursor.getDefaultCursor());
+				}
+			}
+		}.execute();
 	}
 
 	// Prompt for a server datapack folder and load its items into the list.
@@ -180,8 +203,7 @@ public class Gui
 		}
 
 		_datapack = datapack;
-		final int count = loadItems(datapack.getItemsDir(), new File(ICON_PATH));
-		MessageUtils.showInfoMessage(_frame, "Loaded " + count + " items from:\n" + datapack, "Datapack loaded");
+		loadItemsAsync(datapack.getItemsDir(), new File(ICON_PATH), datapack);
 	}
 
 	// Start a new, empty multisell (its id is chosen at save time).
