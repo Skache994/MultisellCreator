@@ -1,11 +1,13 @@
 package com.l2skale.multisell.ui;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.io.File;
 
+import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JFileChooser;
@@ -49,6 +51,7 @@ public class Gui
 	private Datapack _datapack;
 	private ItemManager _itemManager;
 	private RightPanel _rightPanel;
+	private JSplitPane _splitPane;
 	private Multisell _multisell;
 	private Entry _selectedEntry;
 
@@ -64,7 +67,11 @@ public class Gui
 	{
 		// Theme toggle button (sun/moon icon).
 		JButton themeButton = new JButton();
-		themeButton.addActionListener(_ -> ThemeManager.toggleTheme(themeButton, _frame));
+		themeButton.addActionListener(_ ->
+		{
+			ThemeManager.toggleTheme(themeButton, _frame);
+			applyThemeBorder();
+		});
 		ThemeManager.updateThemeButton(themeButton);
 
 		// Top strip: toolbar on the left, theme toggle on the right.
@@ -97,20 +104,34 @@ public class Gui
 		// Right Panel: editor (Ingredients | Products) + the Entries list
 		_rightPanel = new RightPanel();
 		_rightPanel.getEntriesPanel().addSelectionListener(this::showEntryInEditor);
-		_rightPanel.getIngredientsPanel().setOnRemove(item -> removeFromSelected(true, item));
-		_rightPanel.getProductsPanel().setOnRemove(item -> removeFromSelected(false, item));
+		_rightPanel.getIngredientsPanel().setOnRemove(this::delete);
+		_rightPanel.getProductsPanel().setOnRemove(this::delete);
 		_rightPanel.getIngredientsPanel().enableItemDrop(item -> addItemToSelected(true, item));
 		_rightPanel.getProductsPanel().enableItemDrop(item -> addItemToSelected(false, item));
 		_rightPanel.getIngredientsPanel().setOnEditAmount(this::editAmount);
 		_rightPanel.getProductsPanel().setOnEditAmount(this::editAmount);
 		_rightPanel.getEntriesPanel().enableEntryDrag();
 		_rightPanel.getEntriesPanel().setOnDuplicate(this::duplicateEntry);
-		_rightPanel.getEntriesPanel().setOnDelete(this::deleteEntry);
+		_rightPanel.getEntriesPanel().setOnDelete(this::delete);
 
-		// Set up the split pane
-		JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, leftPanel, _rightPanel);
-		splitPane.setDividerLocation(200);
-		_frame.add(splitPane, BorderLayout.CENTER);
+		// Set up the split pane (holds the 4 lists) with an explicit outer border.
+		_splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, leftPanel, _rightPanel);
+		_splitPane.setDividerLocation(200);
+		applyThemeBorder();
+		_frame.add(_splitPane, BorderLayout.CENTER);
+	}
+
+	// Border around the split pane (the box around the 4 lists), re-applied on theme
+	// change because Nimbus does not reliably refresh its own border color.
+	private void applyThemeBorder()
+	{
+		if (_splitPane == null)
+		{
+			return;
+		}
+
+		final Color color = ThemeManager.isDarkMode() ? new Color(170, 170, 170) : new Color(120, 120, 120);
+		_splitPane.setBorder(BorderFactory.createLineBorder(color));
 	}
 
 	private JPanel buildToolbar()
@@ -139,7 +160,7 @@ public class Gui
 
 		// Trash bin: drag an item or entry here to delete it.
 		TrashBinPanel trashBin = new TrashBinPanel();
-		trashBin.setOnDelete(this::deleteDragged);
+		trashBin.setOnDelete(this::delete);
 
 		// Bottom bar: buttons in the middle, trash bin on the right.
 		JPanel southPanel = new JPanel(new BorderLayout());
@@ -341,22 +362,34 @@ public class Gui
 		_rightPanel.getProductsPanel().setItems(entry.getProducts(), _itemManager::getItemById);
 	}
 
-	// Handle something dragged onto the trash bin: an item (remove from the selected
-	// entry) or an entry (remove from the multisell).
-	private void deleteDragged(Object dragged)
+	// The single delete path for the whole app: removes an item from the selected
+	// entry, or an entry from the multisell, then plays the delete sound. Every
+	// delete trigger (right-click or drag-to-bin) routes through here.
+	private void delete(Object target)
 	{
-		if (dragged instanceof MultisellItem multisellItem)
+		boolean deleted = false;
+
+		if (target instanceof MultisellItem item)
 		{
-			if (_selectedEntry != null)
+			if ((_selectedEntry != null) && (_selectedEntry.getIngredients().remove(item) || _selectedEntry.getProducts().remove(item)))
 			{
-				_selectedEntry.getIngredients().remove(multisellItem);
-				_selectedEntry.getProducts().remove(multisellItem);
 				refreshAfterEdit();
+				deleted = true;
 			}
 		}
-		else if (dragged instanceof Entry entry)
+		else if (target instanceof Entry entry)
 		{
-			deleteEntry(entry);
+			if ((_multisell != null) && _multisell.getEntries().remove(entry))
+			{
+				_rightPanel.getEntriesPanel().setMultisell(_multisell, _itemManager::getItemById);
+				showEntryInEditor(null);
+				deleted = true;
+			}
+		}
+
+		if (deleted)
+		{
+			Sound.playSound("trash_basket.wav");
 		}
 	}
 
@@ -397,39 +430,6 @@ public class Gui
 
 		_rightPanel.getEntriesPanel().setMultisell(_multisell, _itemManager::getItemById);
 		_rightPanel.getEntriesPanel().selectEntry(copy);
-	}
-
-	// Remove an entry from the current multisell.
-	private void deleteEntry(Entry entry)
-	{
-		if (_multisell == null)
-		{
-			return;
-		}
-
-		_multisell.getEntries().remove(entry);
-		_rightPanel.getEntriesPanel().setMultisell(_multisell, _itemManager::getItemById);
-		showEntryInEditor(null);
-	}
-
-	// Remove an item from the selected entry's ingredient or product list.
-	private void removeFromSelected(boolean ingredient, MultisellItem item)
-	{
-		if (_selectedEntry == null)
-		{
-			return;
-		}
-
-		if (ingredient)
-		{
-			_selectedEntry.getIngredients().remove(item);
-		}
-		else
-		{
-			_selectedEntry.getProducts().remove(item);
-		}
-
-		refreshAfterEdit();
 	}
 
 	// Add an item (asking for an amount) as an ingredient or product of the selected entry.

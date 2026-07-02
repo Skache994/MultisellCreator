@@ -113,7 +113,6 @@ public class TrashBinPanel extends JPanel
 						{
 							_onDelete.accept(value);
 						}
-						Sound.playSound("trash_basket.wav");
 						event.dropComplete(true);
 					}
 					else
