@@ -23,7 +23,7 @@ trade, set amounts, and export a clean, server-ready multisell XML - no hand-edi
 ## Requirements
 
 - Java 25
-- [Apache Ant](https://ant.apache.org/) (to build - bundled with Eclipse, or install standalone for command-line builds)
+- [Eclipse](https://www.eclipse.org/downloads/) (to build from source)
 
 ## Download
 
@@ -34,12 +34,6 @@ and double-click **`MultisellCreator.vbs`**. (Java 25 must be installed.)
 ## Build from source
 
 **In Eclipse:** right-click `build.xml` -> **Run As -> Ant Build**.
-
-**From a terminal** (with Ant installed):
-
-```bash
-ant
-```
 
 The build produces a single `MultisellCreator.zip` in a `release/` folder next to the
 project (one level up). Unzip it and double-click `MultisellCreator.vbs` to run.
