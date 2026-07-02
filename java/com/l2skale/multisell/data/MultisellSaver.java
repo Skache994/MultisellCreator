@@ -59,7 +59,7 @@ public class MultisellSaver
 		{
 			sb.append(" useRate=\"").append(multisell.getUseRate()).append("\"");
 		}
-		sb.append(" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:noNamespaceSchemaLocation=\"../xsd/multisell.xsd\">\n");
+		sb.append(" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:noNamespaceSchemaLocation=\"").append(schemaLocation(file)).append("\">\n");
 
 		// Allowed NPCs.
 		if (!multisell.getNpcIds().isEmpty())
@@ -90,6 +90,24 @@ public class MultisellSaver
 		sb.append("</list>\n");
 
 		Files.writeString(file.toPath(), sb.toString(), StandardCharsets.UTF_8);
+	}
+
+	// The schema path is relative to the file's own location, so its depth depends on how far
+	// below the multisell/ folder the file sits: multisell/NNN.xml -> ../xsd, multisell/custom/NNN.xml -> ../../xsd.
+	private static String schemaLocation(File file)
+	{
+		File dir = file.getParentFile();
+		int up = 1;
+		while (dir != null)
+		{
+			if (dir.getName().equalsIgnoreCase("multisell"))
+			{
+				return "../".repeat(up) + "xsd/multisell.xsd";
+			}
+			up++;
+			dir = dir.getParentFile();
+		}
+		return "../xsd/multisell.xsd"; // Not under a multisell/ folder; use the default depth.
 	}
 
 	// One ingredient/production line with the item name as an inline comment.

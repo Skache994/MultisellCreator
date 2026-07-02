@@ -76,6 +76,7 @@ public class Gui
 	private JSplitPane _splitPane;
 	private Multisell _multisell;
 	private Entry _selectedEntry;
+	private File _multisellDir; // Folder the current multisell was opened from; save writes back here so a file from custom/ stays in custom/. Null for a new multisell.
 
 	private static String ICON_PATH = "data/icons";
 
@@ -274,6 +275,7 @@ public class Gui
 		}
 
 		_multisell = new Multisell(0);
+		_multisellDir = null; // New multisell has no source folder yet; save falls back to the datapack's multisell dir.
 		_rightPanel.getEntriesPanel().setMultisell(_multisell, _itemManager::getItemById);
 		_settingsPanel.setMultisell(_multisell);
 		showEntryInEditor(null);
@@ -315,6 +317,7 @@ public class Gui
 		try
 		{
 			_multisell = MultisellLoader.load(chooser.getSelectedFile());
+			_multisellDir = chooser.getSelectedFile().getParentFile(); // Remember the source folder (e.g. custom/) so Save writes back here.
 			_rightPanel.getEntriesPanel().setMultisell(_multisell, _itemManager::getItemById);
 			_settingsPanel.setMultisell(_multisell);
 			showEntryInEditor(null);
@@ -368,7 +371,8 @@ public class Gui
 		}
 
 		_multisell.setId(id);
-		final File dir = _datapack.getMultisellDir();
+		// Save back to the folder the multisell was opened from (keeps custom/ files in custom/); new multisells go to the datapack's multisell dir.
+		final File dir = (_multisellDir != null) ? _multisellDir : _datapack.getMultisellDir();
 		dir.mkdirs();
 		final File file = new File(dir, id + ".xml");
 
