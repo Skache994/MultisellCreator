@@ -37,6 +37,7 @@ import com.l2skale.multisell.model.AvailableItemList;
 import com.l2skale.multisell.model.Item;
 import com.l2skale.multisell.ui.dnd.ItemExportTransferHandler;
 import com.l2skale.multisell.ui.renders.ItemListRenderer;
+import com.l2skale.multisell.ui.utils.HintList;
 import com.l2skale.multisell.ui.utils.ContextMenuStyler;
 import com.l2skale.multisell.ui.utils.MessageUtils;
 import com.l2skale.multisell.ui.utils.ResourceIcons;
@@ -165,7 +166,9 @@ public class AvailableItemPanel extends JPanel
 		add(northPanel, BorderLayout.NORTH);
 
 		// List with scroll pane
-		_availableItemsView = new JList<>(_availableItemsList.getModel());
+		final HintList<Item> list = new HintList<>(_availableItemsList.getModel());
+		list.setHint("Open a datapack\nto load items");
+		_availableItemsView = list;
 		_availableItemsView.setCellRenderer(new ItemListRenderer());
 
 		// Setup drag

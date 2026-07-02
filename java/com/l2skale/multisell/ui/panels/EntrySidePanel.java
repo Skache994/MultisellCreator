@@ -11,7 +11,6 @@ import java.util.function.IntFunction;
 import javax.swing.DefaultListModel;
 import javax.swing.DropMode;
 import javax.swing.JLabel;
-import javax.swing.JList;
 import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
@@ -21,6 +20,7 @@ import com.l2skale.multisell.model.Item;
 import com.l2skale.multisell.model.multisell.MultisellItem;
 import com.l2skale.multisell.ui.dnd.AddItemTransferHandler;
 import com.l2skale.multisell.ui.renders.MultisellItemRenderer;
+import com.l2skale.multisell.ui.utils.HintList;
 
 /*
  * A titled list of multisell items - used for the selected entry's ingredients
@@ -33,7 +33,7 @@ public class EntrySidePanel extends JPanel
 	private static final long serialVersionUID = 1L;
 
 	private final DefaultListModel<MultisellItem> _model = new DefaultListModel<>();
-	private final JList<MultisellItem> _view = new JList<>(_model);
+	private final HintList<MultisellItem> _view = new HintList<>(_model);
 	private final MultisellItemRenderer _renderer = new MultisellItemRenderer();
 
 	private Consumer<MultisellItem> _onRemove;
@@ -48,6 +48,7 @@ public class EntrySidePanel extends JPanel
 		add(label, BorderLayout.NORTH);
 
 		_view.setCellRenderer(_renderer);
+		_view.setHint("Select an entry to edit");
 		add(new JScrollPane(_view), BorderLayout.CENTER);
 
 		installContextMenu();
@@ -80,6 +81,12 @@ public class EntrySidePanel extends JPanel
 	public void clearItems()
 	{
 		_model.clear();
+	}
+
+	// Set the empty-state hint shown when the list is empty.
+	public void setHint(String hint)
+	{
+		_view.setHint(hint);
 	}
 
 	// Allow items dragged from the item list to be dropped here, and allow the

@@ -306,11 +306,15 @@ public class Gui
 		_selectedEntry = entry;
 		if (entry == null)
 		{
+			_rightPanel.getIngredientsPanel().setHint("Select an entry to edit");
+			_rightPanel.getProductsPanel().setHint("Select an entry to edit");
 			_rightPanel.getIngredientsPanel().clearItems();
 			_rightPanel.getProductsPanel().clearItems();
 			return;
 		}
 
+		_rightPanel.getIngredientsPanel().setHint("Drag items here");
+		_rightPanel.getProductsPanel().setHint("Drag items here");
 		_rightPanel.getIngredientsPanel().setItems(entry.getIngredients(), _itemManager::getItemById);
 		_rightPanel.getProductsPanel().setItems(entry.getProducts(), _itemManager::getItemById);
 	}

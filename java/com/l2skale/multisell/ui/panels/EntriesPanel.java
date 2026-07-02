@@ -10,7 +10,6 @@ import java.util.function.IntFunction;
 
 import javax.swing.DefaultListModel;
 import javax.swing.JLabel;
-import javax.swing.JList;
 import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
@@ -21,6 +20,7 @@ import com.l2skale.multisell.model.multisell.Entry;
 import com.l2skale.multisell.model.multisell.Multisell;
 import com.l2skale.multisell.ui.dnd.ListExportTransferHandler;
 import com.l2skale.multisell.ui.renders.EntryRowRenderer;
+import com.l2skale.multisell.ui.utils.HintList;
 
 /*
  * Shows every entry of a loaded multisell, one row per entry (ingredients -> products).
@@ -33,7 +33,7 @@ public class EntriesPanel extends JPanel
 	private static final long serialVersionUID = 1L;
 
 	private final DefaultListModel<Entry> _model = new DefaultListModel<>();
-	private final JList<Entry> _view = new JList<>(_model);
+	private final HintList<Entry> _view = new HintList<>(_model);
 	private final EntryRowRenderer _renderer = new EntryRowRenderer();
 	private final JLabel _title = new JLabel("Entries");
 
@@ -49,6 +49,7 @@ public class EntriesPanel extends JPanel
 		add(_title, BorderLayout.NORTH);
 
 		_view.setCellRenderer(_renderer);
+		_view.setHint("New or Open a multisell");
 		add(new JScrollPane(_view), BorderLayout.CENTER);
 
 		setPreferredSize(new Dimension(200, 200));
@@ -95,6 +96,7 @@ public class EntriesPanel extends JPanel
 		{
 			_model.addElement(entry);
 		}
+		_view.setHint("Click 'New Entry' to add a trade");
 		updateTitle();
 	}
 
