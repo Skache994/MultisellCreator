@@ -32,6 +32,7 @@ public class ThemeManager
 			isDarkMode = true;
 		}
 
+		SettingsManager.setDarkTheme(isDarkMode);
 		updateThemeButton(themeButton);
 		SwingUtilities.updateComponentTreeUI(frame);
 	}
@@ -62,10 +63,18 @@ public class ThemeManager
 		return isDarkMode; // Returns true for Dark, false for Light.
 	}
 
-	// Apply the initial theme (default is dark mode).
+	// Apply the theme saved from last session (defaults to dark on first run).
 	public static void applyInitialTheme()
 	{
-		DarkTheme.activate(); // Always apply dark theme first.
+		isDarkMode = SettingsManager.isDarkTheme();
+		if (isDarkMode)
+		{
+			DarkTheme.activate();
+		}
+		else
+		{
+			DarkTheme.deactivate();
+		}
 	}
 
 	private static ImageIcon loadScaled(String name)

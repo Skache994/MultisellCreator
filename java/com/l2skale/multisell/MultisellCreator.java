@@ -2,6 +2,8 @@ package com.l2skale.multisell;
 
 import java.awt.Dimension;
 import java.awt.Image;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -10,6 +12,7 @@ import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
 import javax.swing.WindowConstants;
 
+import com.l2skale.multisell.managers.SettingsManager;
 import com.l2skale.multisell.managers.ThemeManager;
 import com.l2skale.multisell.ui.Gui;
 import com.l2skale.multisell.ui.utils.SplashScreen;
@@ -23,10 +26,24 @@ public class MultisellCreator extends JFrame
 
 	public MultisellCreator()
 	{
+		// Load saved user settings (last datapack path, etc.) before building the UI.
+		SettingsManager.load();
+
 		setTitle("Multisell XML Creator");
 		setMinimumSize(new Dimension(850, 650));
+		setSize(SettingsManager.getWindowWidth(850), SettingsManager.getWindowHeight(650));
 		setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
 		setLocationRelativeTo(null);
+
+		// Remember the window size when the user closes the app.
+		addWindowListener(new WindowAdapter()
+		{
+			@Override
+			public void windowClosing(WindowEvent e)
+			{
+				SettingsManager.setWindowSize(getWidth(), getHeight());
+			}
+		});
 
 		// Set initial Dark theme.
 		ThemeManager.applyInitialTheme();

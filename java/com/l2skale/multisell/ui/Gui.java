@@ -25,6 +25,7 @@ import com.l2skale.multisell.data.MultisellLoader;
 import com.l2skale.multisell.data.MultisellSaver;
 import com.l2skale.multisell.datapack.Datapack;
 import com.l2skale.multisell.managers.ItemManager;
+import com.l2skale.multisell.managers.SettingsManager;
 import com.l2skale.multisell.managers.ThemeManager;
 import com.l2skale.multisell.model.AvailableItemList;
 import com.l2skale.multisell.model.Item;
@@ -211,6 +212,18 @@ public class Gui
 		final JFileChooser chooser = new JFileChooser();
 		chooser.setDialogTitle("Select the server 'game' folder (or its 'data' folder)");
 		chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+
+		// Start the chooser at the last opened datapack, if we have one.
+		final String lastPath = SettingsManager.getLastDatapackPath();
+		if (lastPath != null)
+		{
+			final File lastDir = new File(lastPath);
+			if (lastDir.isDirectory())
+			{
+				chooser.setCurrentDirectory(lastDir);
+			}
+		}
+
 		if (chooser.showOpenDialog(_frame) != JFileChooser.APPROVE_OPTION)
 		{
 			return;
@@ -222,6 +235,9 @@ public class Gui
 			MessageUtils.showErrorMessage(_frame, "That folder is not a valid datapack.\nPick the server 'game' folder or its 'data' folder (must contain data/stats/items).", "Invalid datapack");
 			return;
 		}
+
+		// Remember this datapack for next launch.
+		SettingsManager.setLastDatapackPath(chooser.getSelectedFile().getAbsolutePath());
 
 		_datapack = datapack;
 		loadItemsAsync(datapack.getItemsDir(), new File(ICON_PATH), datapack);
@@ -252,13 +268,28 @@ public class Gui
 			return;
 		}
 
-		final JFileChooser chooser = new JFileChooser(_datapack.getMultisellDir());
+		// Start at the last folder a multisell was opened from, else the datapack's multisell dir.
+		File startDir = _datapack.getMultisellDir();
+		final String lastMultisell = SettingsManager.getLastMultisellPath();
+		if (lastMultisell != null)
+		{
+			final File lastDir = new File(lastMultisell);
+			if (lastDir.isDirectory())
+			{
+				startDir = lastDir;
+			}
+		}
+
+		final JFileChooser chooser = new JFileChooser(startDir);
 		chooser.setDialogTitle("Open multisell XML");
 		chooser.setFileFilter(new FileNameExtensionFilter("Multisell XML (*.xml)", "xml"));
 		if (chooser.showOpenDialog(_frame) != JFileChooser.APPROVE_OPTION)
 		{
 			return;
 		}
+
+		// Remember the folder for next time.
+		SettingsManager.setLastMultisellPath(chooser.getSelectedFile().getParent());
 
 		try
 		{
