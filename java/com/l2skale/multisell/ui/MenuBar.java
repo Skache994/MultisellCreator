@@ -1,6 +1,8 @@
 package com.l2skale.multisell.ui;
 
 import java.awt.Desktop;
+import java.net.URI;
+import java.net.URL;
 
 import javax.swing.ImageIcon;
 import javax.swing.JEditorPane;
@@ -9,9 +11,9 @@ import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
-import javax.swing.JScrollPane;
 import javax.swing.event.HyperlinkEvent;
 
+import com.l2skale.multisell.managers.ThemeManager;
 import com.l2skale.multisell.ui.utils.ResourceIcons;
 
 /*
@@ -19,7 +21,9 @@ import com.l2skale.multisell.ui.utils.ResourceIcons;
  */
 public class MenuBar
 {
-	// Method to create the JMenuBar
+	private static final String GITHUB_URL = "https://github.com/Skache994/MultisellCreator";
+	private static final String WEBSITE_URL = "http://www.l2skale.com";
+
 	public static JMenuBar createMenuBar(JFrame parentFrame, Runnable onOpenDatapack, Runnable onNewMultisell, Runnable onOpenMultisell, Runnable onSaveMultisell)
 	{
 		JMenuBar menuBar = new JMenuBar();
@@ -48,83 +52,101 @@ public class MenuBar
 
 		// Help Menu
 		JMenu helpMenu = new JMenu("Help");
+		JMenuItem howToItem = new JMenuItem("How to Use");
+		JMenuItem githubItem = new JMenuItem("GitHub");
+		JMenuItem websiteItem = new JMenuItem("Website");
 		JMenuItem aboutItem = new JMenuItem("About");
 
-		// Action for About item
+		howToItem.addActionListener(_ -> showHowToDialog(parentFrame));
+		githubItem.addActionListener(_ -> browse(GITHUB_URL));
+		websiteItem.addActionListener(_ -> browse(WEBSITE_URL));
 		aboutItem.addActionListener(_ -> showAboutDialog(parentFrame));
 
+		helpMenu.add(howToItem);
+		helpMenu.addSeparator();
+		helpMenu.add(githubItem);
+		helpMenu.add(websiteItem);
+		helpMenu.addSeparator();
 		helpMenu.add(aboutItem);
 
-		// Add menus to the bar
 		menuBar.add(fileMenu);
 		menuBar.add(helpMenu);
 
 		return menuBar;
 	}
 
-	// Show the About dialog.
+	// A short quick-start guide.
+	private static void showHowToDialog(JFrame parentFrame)
+	{
+		final String textColor = ThemeManager.isDarkMode() ? "#E6E6E6" : "#202020";
+
+		final String html = "<html><body style='font-family:Arial; width:360px; color:" + textColor + ";'>" //
+			+ "<h3>How to use</h3>" //
+			+ "<ol>" //
+			+ "<li><b>Open Datapack</b> - point at your server's <i>game</i> (or <i>data</i>) folder to load items.</li>" //
+			+ "<li><b>New</b> or <b>Open</b> a multisell.</li>" //
+			+ "<li><b>New Entry</b>, then add items (drag from the list or right-click) and set NPCs / options.</li>" //
+			+ "<li><b>Save</b> - writes <i>data/multisell/&lt;id&gt;.xml</i> into the datapack.</li>" //
+			+ "</ol>" //
+			+ "<p>Tips: right-click an item or entry to remove it, drag it onto the trash bin to delete, " //
+			+ "and double-click an item to change its amount.</p>" //
+			+ "</body></html>";
+
+		JOptionPane.showMessageDialog(parentFrame, htmlPane(html), "How to Use", JOptionPane.INFORMATION_MESSAGE);
+	}
+
+	// The About dialog.
 	private static void showAboutDialog(JFrame parentFrame)
 	{
-		// Load the Discord icon with error handling
-		ImageIcon discordIcon = null;
-		try
-		{
-			discordIcon = ResourceIcons.loadResourceIconsIcon("Discord_32x32.png");
-			if (discordIcon == null)
-			{
-				throw new Exception("Discord icon not found.");
-			}
-		}
-		catch (Exception e)
-		{
-			System.err.println("Error loading Discord icon: " + e.getMessage());
-			discordIcon = new ImageIcon(); // Use a default/fallback icon if there's an error
-		}
+		final boolean dark = ThemeManager.isDarkMode();
+		final String textColor = dark ? "#E6E6E6" : "#202020";
+		final String subColor = dark ? "#AAAAAA" : "#666666";
+		final String linkColor = dark ? "#7FB3FF" : "#0066CC";
 
-		// HTML content with embedded image
-		String aboutMessage = "<html>" + "<h2>Multisell Creator</h2>" + "<p><b>Version 1.0</b></p>" + "<p>Developed by <b>Skache</b></p>" + "<p><img src='" + discordIcon.toString() + "' width='20' height='20'> " + "&nbsp;&nbsp;&nbsp;" // Adds three spaces
-				+ "<a style='font-size: 12px; font-weight: bold; color: #FF00FF;'>skache</a></p>" + "</html>";
+		final URL discordUrl = MenuBar.class.getResource("/images/Discord_32x32.png");
+		final String discord = (discordUrl != null) ? ("<img src='" + discordUrl + "' width='16' height='16'>&nbsp;<b>skache</b>") : "<b>skache</b>";
 
-		// Load the app's icon with error handling
-		ImageIcon appIcon = null;
-		try
-		{
-			appIcon = ResourceIcons.loadResourceIconsIcon("MSC_64x64.png");
-			if (appIcon == null)
-			{
-				throw new Exception("App icon not found.");
-			}
-		}
-		catch (Exception e)
-		{
-			System.err.println("Error loading app icon: " + e.getMessage());
-			appIcon = new ImageIcon(); // Use a default/fallback icon if there's an error
-		}
+		final String html = "<html><body style='font-family:Arial; text-align:center; color:" + textColor + ";'>" //
+			+ "<h2 style='margin:2px;'>Multisell XML Creator</h2>" //
+			+ "<div style='margin:2px;'>Version 1.0</div>" //
+			+ "<div style='margin:2px; color:" + subColor + ";'>Create L2J Mobius multisell XML from a live datapack</div>" //
+			+ "<div style='margin:8px 2px 2px 2px;'>by <b>Vlatko Pockov</b></div>" //
+			+ "<div style='margin:4px;'>" + discord + "</div>" //
+			+ "<div style='margin:2px;'><a href='" + WEBSITE_URL + "' style='color:" + linkColor + ";'>www.l2skale.com</a></div>" //
+			+ "<div style='margin:2px;'><a href='" + GITHUB_URL + "' style='color:" + linkColor + ";'>GitHub repository</a></div>" //
+			+ "</body></html>";
 
-		// Create a JEditorPane to display HTML content
-		JEditorPane editorPane = new JEditorPane("text/html", aboutMessage);
-		editorPane.setEditable(false);
-		editorPane.setBackground(parentFrame.getBackground());
-		editorPane.setFocusable(false);
+		final ImageIcon appIcon = ResourceIcons.loadResourceIconsIcon("MSC_64x64.png");
+		JOptionPane.showMessageDialog(parentFrame, htmlPane(html), "About", JOptionPane.INFORMATION_MESSAGE, appIcon != null ? appIcon : new ImageIcon());
+	}
 
-		// Make the links clickable
-		editorPane.addHyperlinkListener(e ->
+	// A read-only, transparent HTML pane whose links open in the browser.
+	private static JEditorPane htmlPane(String html)
+	{
+		final JEditorPane pane = new JEditorPane("text/html", html);
+		pane.setEditable(false);
+		pane.setFocusable(false);
+		pane.setOpaque(false);
+		pane.addHyperlinkListener(e ->
 		{
 			if (HyperlinkEvent.EventType.ACTIVATED.equals(e.getEventType()))
 			{
-				try
-				{
-					Desktop.getDesktop().browse(e.getURL().toURI());
-				}
-				catch (Exception ex)
-				{
-					ex.printStackTrace();
-				}
+				browse(e.getURL().toString());
 			}
 		});
-
-		// Show the dialog with custom icon and editor pane
-		JOptionPane.showMessageDialog(parentFrame, new JScrollPane(editorPane), "About", JOptionPane.INFORMATION_MESSAGE, appIcon);
+		return pane;
 	}
 
+	// Open a URL in the default browser.
+	private static void browse(String url)
+	{
+		try
+		{
+			Desktop.getDesktop().browse(new URI(url));
+		}
+		catch (Exception e)
+		{
+			e.printStackTrace();
+		}
+	}
 }
