@@ -29,8 +29,6 @@ import java.awt.Font;
 import java.awt.Image;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.util.function.Consumer;
 
 import javax.swing.AbstractAction;
@@ -43,9 +41,7 @@ import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JList;
-import javax.swing.JMenuItem;
 import javax.swing.JPanel;
-import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.JTextField;
 import javax.swing.KeyStroke;
@@ -53,13 +49,12 @@ import javax.swing.SwingUtilities;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
-import com.l2skale.multisell.managers.ThemeManager;
 import com.l2skale.multisell.model.AvailableItemList;
 import com.l2skale.multisell.model.Item;
 import com.l2skale.multisell.ui.dnd.ItemExportTransferHandler;
 import com.l2skale.multisell.ui.renders.ItemListRenderer;
 import com.l2skale.multisell.ui.utils.HintList;
-import com.l2skale.multisell.ui.utils.ContextMenuStyler;
+import com.l2skale.multisell.ui.utils.ListContextMenu;
 import com.l2skale.multisell.ui.utils.MessageUtils;
 import com.l2skale.multisell.ui.utils.ResourceIcons;
 import com.l2skale.multisell.ui.utils.Sound;
@@ -260,70 +255,12 @@ public class AvailableItemPanel extends JPanel
 
 	private void createContextMenuToAvailableItems()
 	{
-		_availableItemsView.addMouseListener(new MouseAdapter()
+		ListContextMenu.install(_availableItemsView, (menu, item, _) ->
 		{
-			@Override
-			public void mousePressed(MouseEvent e)
-			{
-				showContextMenu(e);
-			}
-
-			@Override
-			public void mouseReleased(MouseEvent e)
-			{
-				showContextMenu(e);
-			}
-
-			private void showContextMenu(MouseEvent e)
-			{
-				if (e.isPopupTrigger())
-				{
-					int index = _availableItemsView.locationToIndex(e.getPoint());
-					if (index != -1)
-					{
-						_availableItemsView.setSelectedIndex(index);
-
-						// Recreate the context menu on demand
-						boolean isDarkTheme = ThemeManager.getCurrentTheme();
-						ContextMenuStyler menuStyler = new ContextMenuStyler(isDarkTheme);
-						JPopupMenu itemMenu = new JPopupMenu();
-
-						// Add "Add as Ingredient"
-						JMenuItem addIngredientItem = new JMenuItem("Add as Ingredient");
-						menuStyler.styleMenuItem(addIngredientItem);
-						addIngredientItem.addActionListener(_ ->
-						{
-							Item selectedItem = _availableItemsView.getSelectedValue();
-							if (selectedItem != null)
-							{
-								_onAddIngredient.accept(selectedItem);
-							}
-						});
-						itemMenu.add(addIngredientItem);
-
-						// Add "Add as Product"
-						JMenuItem addProductItem = new JMenuItem("Add as Product");
-						menuStyler.styleMenuItem(addProductItem);
-						addProductItem.addActionListener(_ ->
-						{
-							Item selectedItem = _availableItemsView.getSelectedValue();
-							if (selectedItem != null)
-							{
-								_onAddProduct.accept(selectedItem);
-							}
-						});
-						itemMenu.add(addProductItem);
-
-						// Add "View Info"
-						JMenuItem viewInfoItem = new JMenuItem("View Info");
-						menuStyler.styleMenuItem(viewInfoItem);
-						viewInfoItem.addActionListener(_ -> showItemInfo(_availableItemsView.getSelectedValue()));
-						itemMenu.add(viewInfoItem);
-
-						itemMenu.show(_availableItemsView, e.getX(), e.getY());
-					}
-				}
-			}
+			menu.item("Add as Ingredient", () -> _onAddIngredient.accept(item));
+			menu.item("Add as Product", () -> _onAddProduct.accept(item));
+			menu.separator();
+			menu.item("View Info", () -> showItemInfo(item));
 		});
 	}
 

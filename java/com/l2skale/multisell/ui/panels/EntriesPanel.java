@@ -24,8 +24,6 @@ package com.l2skale.multisell.ui.panels;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.Font;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.IntFunction;
@@ -33,9 +31,7 @@ import java.util.function.IntFunction;
 import javax.swing.DefaultListModel;
 import javax.swing.DropMode;
 import javax.swing.JLabel;
-import javax.swing.JMenuItem;
 import javax.swing.JPanel;
-import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 
 import com.l2skale.multisell.model.Item;
@@ -44,6 +40,7 @@ import com.l2skale.multisell.model.multisell.Multisell;
 import com.l2skale.multisell.ui.dnd.ListExportTransferHandler;
 import com.l2skale.multisell.ui.renders.EntryRowRenderer;
 import com.l2skale.multisell.ui.utils.HintList;
+import com.l2skale.multisell.ui.utils.ListContextMenu;
 
 /*
  * Shows every entry of a loaded multisell, one row per entry (ingredients -> products).
@@ -170,88 +167,21 @@ public class EntriesPanel extends JPanel
 
 	private void installContextMenu()
 	{
-		_view.addMouseListener(new MouseAdapter()
+		ListContextMenu.install(_view, (menu, entry, index) ->
 		{
-			@Override
-			public void mousePressed(MouseEvent e)
-			{
-				showPopup(e);
-			}
-
-			@Override
-			public void mouseReleased(MouseEvent e)
-			{
-				showPopup(e);
-			}
+			menu.item("Move Up", () -> fire(_onMoveUp, entry)).enabled(index > 0);
+			menu.item("Move Down", () -> fire(_onMoveDown, entry)).enabled(index < (_model.getSize() - 1));
+			menu.separator();
+			menu.item("Duplicate", () -> fire(_onDuplicate, entry));
+			menu.item("Delete", () -> fire(_onDelete, entry));
 		});
 	}
 
-	private void showPopup(MouseEvent e)
+	private static void fire(Consumer<Entry> action, Entry entry)
 	{
-		if (!e.isPopupTrigger())
+		if (action != null)
 		{
-			return;
+			action.accept(entry);
 		}
-
-		final int index = _view.locationToIndex(e.getPoint());
-		if (index < 0)
-		{
-			return;
-		}
-
-		_view.setSelectedIndex(index);
-		final Entry selected = _view.getSelectedValue();
-		if (selected == null)
-		{
-			return;
-		}
-
-		final JPopupMenu menu = new JPopupMenu();
-
-		final JMenuItem moveUp = new JMenuItem("Move Up");
-		moveUp.setEnabled(index > 0);
-		moveUp.addActionListener(_ ->
-		{
-			if (_onMoveUp != null)
-			{
-				_onMoveUp.accept(selected);
-			}
-		});
-		menu.add(moveUp);
-
-		final JMenuItem moveDown = new JMenuItem("Move Down");
-		moveDown.setEnabled(index < (_model.getSize() - 1));
-		moveDown.addActionListener(_ ->
-		{
-			if (_onMoveDown != null)
-			{
-				_onMoveDown.accept(selected);
-			}
-		});
-		menu.add(moveDown);
-
-		menu.addSeparator();
-
-		final JMenuItem duplicate = new JMenuItem("Duplicate");
-		duplicate.addActionListener(_ ->
-		{
-			if (_onDuplicate != null)
-			{
-				_onDuplicate.accept(selected);
-			}
-		});
-		menu.add(duplicate);
-
-		final JMenuItem delete = new JMenuItem("Delete");
-		delete.addActionListener(_ ->
-		{
-			if (_onDelete != null)
-			{
-				_onDelete.accept(selected);
-			}
-		});
-		menu.add(delete);
-
-		menu.show(_view, e.getX(), e.getY());
 	}
 }

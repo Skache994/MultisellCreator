@@ -33,9 +33,7 @@ import java.util.function.IntFunction;
 import javax.swing.DefaultListModel;
 import javax.swing.DropMode;
 import javax.swing.JLabel;
-import javax.swing.JMenuItem;
 import javax.swing.JPanel;
-import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 
 import com.l2skale.multisell.model.Item;
@@ -43,6 +41,7 @@ import com.l2skale.multisell.model.multisell.MultisellItem;
 import com.l2skale.multisell.ui.dnd.AddItemTransferHandler;
 import com.l2skale.multisell.ui.renders.MultisellItemRenderer;
 import com.l2skale.multisell.ui.utils.HintList;
+import com.l2skale.multisell.ui.utils.ListContextMenu;
 
 /*
  * A titled list of multisell items - used for the selected entry's ingredients
@@ -141,95 +140,45 @@ public class EntrySidePanel extends JPanel
 
 	private void installContextMenu()
 	{
+		// Double-click an item to edit its amount.
 		_view.addMouseListener(new MouseAdapter()
 		{
 			@Override
-			public void mousePressed(MouseEvent e)
-			{
-				showPopup(e);
-			}
-
-			@Override
-			public void mouseReleased(MouseEvent e)
-			{
-				showPopup(e);
-			}
-
-			@Override
 			public void mouseClicked(MouseEvent e)
 			{
-				if (e.getClickCount() == 2)
+				if (e.getClickCount() != 2)
 				{
-					final int index = _view.locationToIndex(e.getPoint());
-					if (index >= 0)
+					return;
+				}
+
+				final int index = _view.locationToIndex(e.getPoint());
+				if (index >= 0)
+				{
+					_view.setSelectedIndex(index);
+					final MultisellItem selected = _view.getSelectedValue();
+					if ((selected != null) && (_onEditAmount != null))
 					{
-						_view.setSelectedIndex(index);
-						final MultisellItem selected = _view.getSelectedValue();
-						if ((selected != null) && (_onEditAmount != null))
-						{
-							_onEditAmount.accept(selected);
-						}
+						_onEditAmount.accept(selected);
 					}
 				}
 			}
 		});
+
+		// Right-click menu.
+		ListContextMenu.install(_view, (menu, item, index) ->
+		{
+			menu.item("Move Up", () -> fire(_onMoveUp, item)).enabled(index > 0);
+			menu.item("Move Down", () -> fire(_onMoveDown, item)).enabled(index < (_model.getSize() - 1));
+			menu.separator();
+			menu.item("Remove", () -> fire(_onRemove, item));
+		});
 	}
 
-	private void showPopup(MouseEvent e)
+	private static void fire(Consumer<MultisellItem> action, MultisellItem item)
 	{
-		if (!e.isPopupTrigger())
+		if (action != null)
 		{
-			return;
+			action.accept(item);
 		}
-
-		final int index = _view.locationToIndex(e.getPoint());
-		if (index < 0)
-		{
-			return;
-		}
-
-		_view.setSelectedIndex(index);
-		final MultisellItem selected = _view.getSelectedValue();
-		if (selected == null)
-		{
-			return;
-		}
-
-		final JPopupMenu menu = new JPopupMenu();
-
-		final JMenuItem moveUp = new JMenuItem("Move Up");
-		moveUp.setEnabled(index > 0);
-		moveUp.addActionListener(_ ->
-		{
-			if (_onMoveUp != null)
-			{
-				_onMoveUp.accept(selected);
-			}
-		});
-		menu.add(moveUp);
-
-		final JMenuItem moveDown = new JMenuItem("Move Down");
-		moveDown.setEnabled(index < (_model.getSize() - 1));
-		moveDown.addActionListener(_ ->
-		{
-			if (_onMoveDown != null)
-			{
-				_onMoveDown.accept(selected);
-			}
-		});
-		menu.add(moveDown);
-
-		menu.addSeparator();
-
-		final JMenuItem remove = new JMenuItem("Remove");
-		remove.addActionListener(_ ->
-		{
-			if (_onRemove != null)
-			{
-				_onRemove.accept(selected);
-			}
-		});
-		menu.add(remove);
-		menu.show(_view, e.getX(), e.getY());
 	}
 }
