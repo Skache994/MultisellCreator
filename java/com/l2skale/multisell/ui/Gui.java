@@ -328,7 +328,7 @@ public class Gui
 			_rightPanel.getEntriesPanel().setMultisell(_multisell, _itemManager::getItemById);
 			_settingsPanel.setMultisell(_multisell);
 			showEntryInEditor(null);
-			_frame.setTitle("Multisell XML Creator  -  #" + _multisell.getId() + " (" + _multisell.getEntries().size() + " entries)");
+			_frame.setTitle("Multisell XML Creator  -  " + _multisell.getId() + " (" + _multisell.getEntries().size() + " entries)");
 		}
 		catch (Exception e)
 		{
@@ -396,7 +396,7 @@ public class Gui
 		{
 			MultisellSaver.save(_multisell, file, _itemManager::getItemById);
 			_settingsPanel.setMultisell(_multisell);
-			_frame.setTitle("Multisell XML Creator  -  #" + id + " (" + _multisell.getEntries().size() + " entries)");
+			_frame.setTitle("Multisell XML Creator  -  " + id + " (" + _multisell.getEntries().size() + " entries)");
 			MessageUtils.showInfoMessage(_frame, "Saved to:\n" + file.getAbsolutePath(), "Saved");
 			Sound.playSound("sys_exchange_success.wav");
 		}

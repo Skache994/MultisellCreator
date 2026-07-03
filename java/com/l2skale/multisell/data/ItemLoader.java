@@ -87,25 +87,30 @@ public class ItemLoader
 			DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
 			DocumentBuilder builder = factory.newDocumentBuilder();
 			Document doc = builder.parse(file);
-			doc.getDocumentElement().normalize();
+			final Element root = doc.getDocumentElement();
+			root.normalize();
 
-			// Get all item nodes.
-			NodeList itemNodes = doc.getElementsByTagName("item");
-			for (int i = 0; i < itemNodes.getLength(); i++)
+			// Only <item> elements that are DIRECT children of <list> are real item definitions.
+			// Nested <item> (e.g. rewards inside <capsuled_items>) carry just an id, no name/type -
+			// reading those would overwrite the real definition and leave the item nameless.
+			NodeList children = root.getChildNodes();
+			for (int i = 0; i < children.getLength(); i++)
 			{
-				Node node = itemNodes.item(i);
-				if (node.getNodeType() == Node.ELEMENT_NODE)
+				Node node = children.item(i);
+				if ((node.getNodeType() != Node.ELEMENT_NODE) || !"item".equals(node.getNodeName()))
 				{
-					Element element = (Element) node;
-					int id = Integer.parseInt(element.getAttribute("id"));
-					String name = element.getAttribute("name");
-					String type = element.getAttribute("type");
-					String iconName = getIconNameFromElement(element);
-					boolean isQuestItem = getIsQuestItemFromElement(element);
-
-					// The icon is loaded lazily by Item on first use.
-					items.add(new Item(id, name, type, isQuestItem, iconName, iconsFolderPath));
+					continue;
 				}
+
+				Element element = (Element) node;
+				int id = Integer.parseInt(element.getAttribute("id"));
+				String name = element.getAttribute("name");
+				String type = element.getAttribute("type");
+				String iconName = getIconNameFromElement(element);
+				boolean isQuestItem = getIsQuestItemFromElement(element);
+
+				// The icon is loaded lazily by Item on first use.
+				items.add(new Item(id, name, type, isQuestItem, iconName, iconsFolderPath));
 			}
 		}
 		catch (Exception e)

@@ -130,7 +130,7 @@ public class MultisellSettingsPanel extends JPanel
 			return;
 		}
 
-		_title.setText("Multisell " + (multisell.getId() > 0 ? "#" + multisell.getId() : "(new)"));
+		_title.setText("Multisell " + (multisell.getId() > 0 ? String.valueOf(multisell.getId()) : "(new)"));
 		_applyTaxes.setSelected(multisell.isApplyTaxes());
 		_maintainEnchantment.setSelected(multisell.isMaintainEnchantment());
 		_useRate.setText(multisell.getUseRate() == null ? "" : multisell.getUseRate());
