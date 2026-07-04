@@ -47,6 +47,7 @@ public class MessageUtils
 	// Show an error message.
 	public static void showErrorMessage(Component parent, String message, String title)
 	{
+		Sound.playSound("sys_denial.wav");
 		JOptionPane.showMessageDialog(parent, message, title, JOptionPane.ERROR_MESSAGE);
 	}
 

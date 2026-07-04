@@ -56,6 +56,8 @@ public class SettingsManager
 
 	private static final String KEY_DATAPACK_PATH = "lastDatapackPath";
 	private static final String KEY_MULTISELL_PATH = "lastMultisellPath";
+	private static final String KEY_TEXTURES_PATH = "lastTexturesPath";
+	private static final String KEY_EXPORT_PATH = "lastExportPath";
 	private static final String KEY_THEME = "theme";
 	private static final String KEY_WINDOW_WIDTH = "windowWidth";
 	private static final String KEY_WINDOW_HEIGHT = "windowHeight";
@@ -120,6 +122,30 @@ public class SettingsManager
 	public static void setLastMultisellPath(String path)
 	{
 		PROPS.setProperty(KEY_MULTISELL_PATH, path);
+		save();
+	}
+
+	// Last chosen client textures folder (SysTextures), or null if never set.
+	public static String getLastTexturesPath()
+	{
+		return PROPS.getProperty(KEY_TEXTURES_PATH);
+	}
+
+	public static void setLastTexturesPath(String path)
+	{
+		PROPS.setProperty(KEY_TEXTURES_PATH, path);
+		save();
+	}
+
+	// Last folder an icon was exported to, or null if never set.
+	public static String getLastExportPath()
+	{
+		return PROPS.getProperty(KEY_EXPORT_PATH);
+	}
+
+	public static void setLastExportPath(String path)
+	{
+		PROPS.setProperty(KEY_EXPORT_PATH, path);
 		save();
 	}
 

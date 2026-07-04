@@ -34,6 +34,7 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
 import com.l2skale.multisell.model.multisell.Multisell;
+import com.l2skale.multisell.ui.utils.ButtonFactory;
 
 /*
  * The settings bar: shows the current multisell and edits its list-level options
@@ -48,9 +49,9 @@ public class MultisellSettingsPanel extends JPanel
 
 	private final JLabel _title = new JLabel("No multisell");
 	private final JLabel _npcsLabel = new JLabel("any");
-	private final JButton _npcsButton = new JButton("Edit NPCs...");
-	private final JCheckBox _applyTaxes = new JCheckBox("applyTaxes");
-	private final JCheckBox _maintainEnchantment = new JCheckBox("maintainEnchantment");
+	private final JButton _npcsButton = ButtonFactory.createButton("Edit NPCs...", _ -> editNpcs());
+	private final JCheckBox _applyTaxes = ButtonFactory.createCheckBox("applyTaxes");
+	private final JCheckBox _maintainEnchantment = ButtonFactory.createCheckBox("maintainEnchantment");
 	private final JTextField _useRate = new JTextField(6);
 
 	private Multisell _multisell;
@@ -71,7 +72,6 @@ public class MultisellSettingsPanel extends JPanel
 		add(new JLabel("useRate:"));
 		add(_useRate);
 
-		_npcsButton.addActionListener(_ -> editNpcs());
 		_applyTaxes.addActionListener(_ ->
 		{
 			if (_multisell != null)

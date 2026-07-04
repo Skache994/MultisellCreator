@@ -43,6 +43,7 @@ import javax.swing.SwingWorker;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
 import com.l2skale.multisell.MultisellCreator;
+import com.l2skale.multisell.client.TextureProvider;
 import com.l2skale.multisell.data.MultisellLoader;
 import com.l2skale.multisell.data.MultisellSaver;
 import com.l2skale.multisell.datapack.Datapack;
@@ -57,6 +58,7 @@ import com.l2skale.multisell.model.multisell.MultisellItem;
 import com.l2skale.multisell.ui.panels.AvailableItemPanel;
 import com.l2skale.multisell.ui.panels.MultisellSettingsPanel;
 import com.l2skale.multisell.ui.panels.TrashBinPanel;
+import com.l2skale.multisell.ui.utils.AttentionPulse;
 import com.l2skale.multisell.ui.utils.ButtonFactory;
 import com.l2skale.multisell.ui.utils.DialogUtils;
 import com.l2skale.multisell.ui.utils.MessageUtils;
@@ -78,8 +80,7 @@ public class Gui
 	private Multisell _multisell;
 	private Entry _selectedEntry;
 	private File _multisellDir; // Folder the current multisell was opened from; save writes back here so a file from custom/ stays in custom/. Null for a new multisell.
-
-	private static String ICON_PATH = "data/icons";
+	private AttentionPulse _loadItemsPulse; // Gently glows the Load Items button until items are loaded.
 
 	public Gui(MultisellCreator frame)
 	{
@@ -89,11 +90,22 @@ public class Gui
 
 	public void initialize()
 	{
-		// Theme toggle button (sun/moon icon).
-		JButton themeButton = new JButton();
-		themeButton.addActionListener(_ ->
+		// Icons come from the bundled default Icon.utx out of the box. If the user pointed at a full
+		// client folder before, restore it so its extra packages (BranchIcon, BranchSys...) load too.
+		final String texturesPath = SettingsManager.getLastTexturesPath();
+		if (texturesPath != null)
 		{
-			ThemeManager.toggleTheme(themeButton, _frame);
+			final File texturesDir = new File(texturesPath);
+			if (texturesDir.isDirectory())
+			{
+				TextureProvider.setFolder(texturesDir);
+			}
+		}
+
+		// Theme toggle button (sun/moon icon). The icon is set by ThemeManager just below.
+		JButton themeButton = ButtonFactory.createIconButton(null, event ->
+		{
+			ThemeManager.toggleTheme((JButton) event.getSource(), _frame);
 			applyThemeBorder();
 		});
 		ThemeManager.updateThemeButton(themeButton);
@@ -109,15 +121,18 @@ public class Gui
 		north.add(_settingsPanel, BorderLayout.CENTER);
 		_frame.add(north, BorderLayout.NORTH);
 
-		// Start empty - items are loaded when the user opens a datapack (File > Open Datapack).
+		// Start empty - items are loaded when the user loads a datapack (Load Items).
 
 		// Add the menu bar.
-		JMenuBar menuBar = MenuBar.createMenuBar(_frame, this::openDatapack, this::newMultisell, this::openMultisell, this::saveMultisell);
+		JMenuBar menuBar = MenuBar.createMenuBar(_frame, this::openDatapack, this::newMultisell, this::openMultisell, this::saveMultisell, this::deleteMultisell);
 		_frame.setJMenuBar(menuBar);
 
 		// Create the UI components.
 		createDualPanelLayout();
 		addBottomBar();
+
+		// App starts empty: gently glow Load Items so it is obvious where to begin. Stops once loaded.
+		_loadItemsPulse.start();
 	}
 
 	private void createDualPanelLayout()
@@ -167,11 +182,22 @@ public class Gui
 	private JPanel buildToolbar()
 	{
 		JPanel toolbar = new JPanel(new FlowLayout(FlowLayout.LEFT, 4, 2));
-		toolbar.add(ButtonFactory.createButton("Open Datapack", _ -> openDatapack()));
+
+		// The two buttons that get the app working: load the server's items, then (optionally) icons.
+		final JButton loadItems = ButtonFactory.createButton("Load Items", _ -> openDatapack());
+		loadItems.setToolTipText("Load the server's items - point at the datapack ('game' folder or its 'data' folder).");
+		_loadItemsPulse = new AttentionPulse(loadItems, new Color(255, 180, 40)); // amber, reads in both themes
+		toolbar.add(loadItems);
+
+		final JButton loadIcons = ButtonFactory.createButton("Load Icons", _ -> openTexturesFolder());
+		loadIcons.setToolTipText("Optional - only if some icons are missing. Just point at your Lineage 2 game folder.");
+		toolbar.add(loadIcons);
+
 		toolbar.add(toolbarSeparator());
 		toolbar.add(ButtonFactory.createButton("New", _ -> newMultisell()));
 		toolbar.add(ButtonFactory.createButton("Open", _ -> openMultisell()));
 		toolbar.add(ButtonFactory.createButton("Save", _ -> saveMultisell()));
+		toolbar.add(ButtonFactory.createDangerButton("Delete", _ -> deleteMultisell()));
 		return toolbar;
 	}
 
@@ -200,7 +226,7 @@ public class Gui
 	}
 
 	// Load the available items off the UI thread so a big datapack does not freeze the app.
-	private void loadItemsAsync(File itemsDir, File iconsDir, Datapack datapack)
+	private void loadItemsAsync(File itemsDir, Datapack datapack)
 	{
 		_frame.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
 
@@ -209,7 +235,7 @@ public class Gui
 			@Override
 			protected Integer doInBackground()
 			{
-				_itemManager = new ItemManager(itemsDir.getPath(), iconsDir.getPath());
+				_itemManager = new ItemManager(itemsDir.getPath());
 				_itemManager.loadItems();
 				return _itemManager.getAllItems().size();
 			}
@@ -221,6 +247,8 @@ public class Gui
 				{
 					_availableItemsList.clear();
 					_availableItemsList.addItems(_itemManager.getAllItems().values());
+					_loadItemsPulse.stop(); // items are in - the hint has done its job
+					Sound.playSound("inventory_open_01.wav");
 					MessageUtils.showInfoMessage(_frame, "Loaded " + get() + " items from:\n" + datapack, "Datapack loaded");
 				}
 				catch (Exception e)
@@ -233,6 +261,90 @@ public class Gui
 				}
 			}
 		}.execute();
+	}
+
+	// Prompt for the Lineage 2 game folder and load icons from it. The user only picks the game
+	// folder; the textures folder inside it is found automatically (see resolveTexturesDir).
+	private void openTexturesFolder()
+	{
+		final JFileChooser chooser = new JFileChooser();
+		chooser.setDialogTitle("Select your Lineage 2 game folder");
+		chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+
+		final String lastPath = SettingsManager.getLastTexturesPath();
+		if (lastPath != null)
+		{
+			final File lastDir = new File(lastPath);
+			if (lastDir.isDirectory())
+			{
+				chooser.setCurrentDirectory(lastDir);
+			}
+		}
+
+		if (chooser.showOpenDialog(_frame) != JFileChooser.APPROVE_OPTION)
+		{
+			return;
+		}
+
+		final File gameFolder = chooser.getSelectedFile();
+		final File texturesDir = resolveTexturesDir(gameFolder);
+		if (texturesDir == null)
+		{
+			MessageUtils.showErrorMessage(_frame, "No client icons were found in:\n" + gameFolder + "\n\nPick your Lineage 2 game folder (the one that contains the 'system' folder).", "Icons not found");
+			return;
+		}
+
+		SettingsManager.setLastTexturesPath(gameFolder.getAbsolutePath());
+		TextureProvider.setFolder(texturesDir);
+		reloadIcons();
+	}
+
+	// Finds the client textures folder inside the chosen game folder. Its name varies by chronicle
+	// (OrcVillage "SysTextures", Interlude "systextures"), so it is matched case-insensitively. If
+	// the user already picked a folder that holds .utx files, that folder is used as-is.
+	private static File resolveTexturesDir(File gameFolder)
+	{
+		if ((gameFolder == null) || !gameFolder.isDirectory())
+		{
+			return null;
+		}
+
+		if (hasUtxFiles(gameFolder))
+		{
+			return gameFolder;
+		}
+
+		final File[] matches = gameFolder.listFiles((_, name) -> name.equalsIgnoreCase("SysTextures"));
+		if (matches != null)
+		{
+			for (File match : matches)
+			{
+				if (match.isDirectory() && hasUtxFiles(match))
+				{
+					return match;
+				}
+			}
+		}
+		return null;
+	}
+
+	private static boolean hasUtxFiles(File folder)
+	{
+		final File[] utx = folder.listFiles((_, name) -> name.toLowerCase().endsWith(".utx"));
+		return (utx != null) && (utx.length > 0);
+	}
+
+	// Drop every item's cached icon and repaint, so icons reload from the new source.
+	private void reloadIcons()
+	{
+		if (_itemManager != null)
+		{
+			for (Item item : _itemManager.getAllItems().values())
+			{
+				item.resetIcon();
+			}
+		}
+		_frame.repaint();
 	}
 
 	// Prompt for a server datapack folder and load its items into the list.
@@ -269,7 +381,7 @@ public class Gui
 		SettingsManager.setLastDatapackPath(chooser.getSelectedFile().getAbsolutePath());
 
 		_datapack = datapack;
-		loadItemsAsync(datapack.getItemsDir(), new File(ICON_PATH), datapack);
+		loadItemsAsync(datapack.getItemsDir(), datapack);
 	}
 
 	// Start a new, empty multisell (its id is chosen at save time).
@@ -277,7 +389,7 @@ public class Gui
 	{
 		if ((_datapack == null) || (_itemManager == null))
 		{
-			MessageUtils.showErrorMessage(_frame, "Open a datapack first (File > Open Datapack).", "No datapack");
+			MessageUtils.showErrorMessage(_frame, "Load items first (click Load Items).", "No items loaded");
 			return;
 		}
 
@@ -287,6 +399,7 @@ public class Gui
 		_settingsPanel.setMultisell(_multisell);
 		showEntryInEditor(null);
 		_frame.setTitle("Multisell XML Creator  -  new multisell");
+		Sound.playSound("quest_accept.wav");
 	}
 
 	// Prompt for a multisell XML file from the datapack and display its entries.
@@ -294,7 +407,7 @@ public class Gui
 	{
 		if ((_datapack == null) || (_itemManager == null))
 		{
-			MessageUtils.showErrorMessage(_frame, "Open a datapack first (File > Open Datapack).", "No datapack");
+			MessageUtils.showErrorMessage(_frame, "Load items first (click Load Items).", "No items loaded");
 			return;
 		}
 
@@ -329,6 +442,7 @@ public class Gui
 			_settingsPanel.setMultisell(_multisell);
 			showEntryInEditor(null);
 			_frame.setTitle("Multisell XML Creator  -  " + _multisell.getId() + " (" + _multisell.getEntries().size() + " entries)");
+			Sound.playSound("metal_door_open_01.wav"); // old metal door creak for opening an existing multisell
 		}
 		catch (Exception e)
 		{
@@ -348,6 +462,7 @@ public class Gui
 		final Entry entry = new Entry();
 		_multisell.getEntries().add(entry);
 		_rightPanel.getEntriesPanel().addEntry(entry);
+		Sound.playSound("quest_itemget.wav");
 	}
 
 	// Save the current multisell to the datapack, asking for its id (the file name number).
@@ -398,12 +513,65 @@ public class Gui
 			_settingsPanel.setMultisell(_multisell);
 			_frame.setTitle("Multisell XML Creator  -  " + id + " (" + _multisell.getEntries().size() + " entries)");
 			MessageUtils.showInfoMessage(_frame, "Saved to:\n" + file.getAbsolutePath(), "Saved");
-			Sound.playSound("sys_exchange_success.wav");
+			Sound.playSound("quest_finish.wav");
 		}
 		catch (Exception e)
 		{
 			MessageUtils.showErrorMessage(_frame, "Could not save:\n" + e.getMessage(), "Save failed");
 		}
+	}
+
+	// Delete the currently open multisell's XML file (with confirmation), then clear the editor.
+	private void deleteMultisell()
+	{
+		if (_multisell == null)
+		{
+			MessageUtils.showErrorMessage(_frame, "Nothing to delete - create or open a multisell first.", "Nothing to delete");
+			return;
+		}
+
+		// The file this multisell maps to (same path logic as Save). A new/unsaved one has no file yet.
+		final File dir = (_multisellDir != null) ? _multisellDir : (_datapack != null ? _datapack.getMultisellDir() : null);
+		final File file = ((_multisell.getId() > 0) && (dir != null)) ? new File(dir, _multisell.getId() + ".xml") : null;
+
+		if ((file == null) || !file.exists())
+		{
+			final int discard = JOptionPane.showConfirmDialog(_frame, "This multisell has not been saved yet. Discard it?", "Discard multisell", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+			if (discard == JOptionPane.YES_OPTION)
+			{
+				clearMultisell();
+				Sound.playSound("quest_giveup.wav");
+			}
+			return;
+		}
+
+		final int choice = JOptionPane.showConfirmDialog(_frame, "Delete " + file.getName() + "?\nThis cannot be undone.", "Delete multisell", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+		if (choice != JOptionPane.YES_OPTION)
+		{
+			return;
+		}
+
+		if (file.delete())
+		{
+			Sound.playSound("trash_basket.wav");
+			clearMultisell();
+			MessageUtils.showInfoMessage(_frame, "Deleted:\n" + file.getAbsolutePath(), "Deleted");
+		}
+		else
+		{
+			MessageUtils.showErrorMessage(_frame, "Could not delete:\n" + file.getAbsolutePath(), "Delete failed");
+		}
+	}
+
+	// Return to the empty "no multisell open" state.
+	private void clearMultisell()
+	{
+		_multisell = null;
+		_multisellDir = null;
+		_rightPanel.getEntriesPanel().clear();
+		_settingsPanel.setMultisell(null);
+		showEntryInEditor(null); // also resets _selectedEntry to null
+		_frame.setTitle("Multisell XML Creator");
 	}
 
 	// Show the selected entry's ingredients and products in the editor panels.
@@ -470,6 +638,7 @@ public class Gui
 
 		item.setCount(amount);
 		refreshAfterEdit();
+		Sound.playSound("Type.wav");
 	}
 
 	// Duplicate an entry (right-click) and select the copy.
@@ -493,6 +662,7 @@ public class Gui
 
 		_rightPanel.getEntriesPanel().setMultisell(_multisell, _itemManager::getItemById);
 		_rightPanel.getEntriesPanel().selectEntry(copy);
+		Sound.playSound("quest_middle.wav");
 	}
 
 	// Right-click Move Up (-1) / Move Down (+1): just a reorder to the neighbouring position.
@@ -515,6 +685,7 @@ public class Gui
 		{
 			_rightPanel.getEntriesPanel().setMultisell(_multisell, _itemManager::getItemById);
 			_rightPanel.getEntriesPanel().selectEntry(moved);
+			Sound.playSound("Item_Throw.wav");
 		}
 	}
 
@@ -543,6 +714,7 @@ public class Gui
 		{
 			refreshAfterEdit();
 			(ingredient ? _rightPanel.getIngredientsPanel() : _rightPanel.getProductsPanel()).selectItem(moved);
+			Sound.playSound("Item_Throw.wav");
 		}
 	}
 

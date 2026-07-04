@@ -30,6 +30,7 @@ import javax.swing.JList;
 import javax.swing.ListCellRenderer;
 
 import com.l2skale.multisell.model.Item;
+import com.l2skale.multisell.ui.utils.GradeBadge;
 
 /*
  * @author Skache
@@ -38,11 +39,15 @@ public class ItemListRenderer extends JLabel implements ListCellRenderer<Item>
 {
 	private static final long serialVersionUID = 1L;
 
+	// Every row shows its icon at this fixed size, regardless of the source icon's size.
+	private static final int ICON_SIZE = 32;
+
 	@Override
 	public Component getListCellRendererComponent(JList<? extends Item> list, Item item, int index, boolean isSelected, boolean cellHasFocus)
 	{
-		setIcon(item.getIcon());
-		setText(item.isQuestItem() ? "<html><b style='color:#FFAA00;'>[Quest]</b> " + item.getName() + "</html>" : item.getName());
+		setIcon(item.getScaledIcon(ICON_SIZE));
+		final String quest = item.isQuestItem() ? "<b style='color:#FFAA00;'>[Quest]</b> " : "";
+		setText("<html>" + quest + item.getName() + GradeBadge.htmlTag(item) + "</html>");
 
 		setBackground(RowColors.background(isSelected));
 		setForeground(RowColors.foreground());

@@ -29,7 +29,11 @@ import java.awt.Font;
 import java.awt.Image;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
+import java.awt.image.BufferedImage;
+import java.io.File;
 import java.util.function.Consumer;
+
+import javax.imageio.ImageIO;
 
 import javax.swing.AbstractAction;
 import javax.swing.BorderFactory;
@@ -39,6 +43,7 @@ import javax.swing.DefaultListModel;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComponent;
+import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JPanel;
@@ -48,11 +53,14 @@ import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+import javax.swing.filechooser.FileNameExtensionFilter;
 
+import com.l2skale.multisell.managers.SettingsManager;
 import com.l2skale.multisell.model.AvailableItemList;
 import com.l2skale.multisell.model.Item;
 import com.l2skale.multisell.ui.dnd.ItemExportTransferHandler;
 import com.l2skale.multisell.ui.renders.ItemListRenderer;
+import com.l2skale.multisell.ui.utils.ButtonFactory;
 import com.l2skale.multisell.ui.utils.HintList;
 import com.l2skale.multisell.ui.utils.ListContextMenu;
 import com.l2skale.multisell.ui.utils.MessageUtils;
@@ -66,10 +74,15 @@ public class AvailableItemPanel extends JPanel
 {
 	private static final long serialVersionUID = 1L;
 
+	// Empty-state hints: which one shows depends on whether any items are loaded at all.
+	private static final String HINT_NO_ITEMS = "Click Load Items\nto get started";
+	private static final String HINT_NO_MATCH = "No matching items";
+
 	private final AvailableItemList _availableItemsList;
 	private final Consumer<Item> _onAddIngredient;
 	private final Consumer<Item> _onAddProduct;
 	private JList<Item> _availableItemsView;
+	private HintList<Item> _hintList;
 	private JTextField _searchField;
 
 	public AvailableItemPanel(AvailableItemList item, Consumer<Item> onAddIngredient, Consumer<Item> onAddProduct)
@@ -183,9 +196,17 @@ public class AvailableItemPanel extends JPanel
 
 		// List with scroll pane
 		final HintList<Item> list = new HintList<>(_availableItemsList.getModel());
-		list.setHint("Open a datapack\nto load items");
+		_hintList = list;
 		_availableItemsView = list;
 		_availableItemsView.setCellRenderer(new ItemListRenderer());
+
+		// Fix the cell size so the list does NOT measure every row up front. Measuring a row renders
+		// it, which decodes and caches that item's icon - with ~48k items (OrcVillage) that decoded
+		// every icon on load and RAM shot to ~2GB. With a fixed size, only visible rows are rendered.
+		// The width is intentionally small: a vertical list still paints each row at the full width.
+		_availableItemsView.setFixedCellHeight(36);
+		_availableItemsView.setFixedCellWidth(40);
+		updateHint();
 
 		// Setup drag
 		_availableItemsView.setDragEnabled(true);
@@ -211,18 +232,17 @@ public class AvailableItemPanel extends JPanel
 			System.err.println("Failed to load delete_button.png");
 		}
 
-		JButton clearButton = new JButton(clearIcon);
-		clearButton.setPreferredSize(new Dimension(clearIcon.getIconWidth(), clearIcon.getIconHeight()));
-		clearButton.setBorder(BorderFactory.createEmptyBorder());
-		clearButton.setContentAreaFilled(false);
-		clearButton.setFocusPainted(false);
-		clearButton.setToolTipText("Clear search");
-		clearButton.addActionListener(_ ->
+		JButton clearButton = ButtonFactory.createIconButton(clearIcon, _ ->
 		{
 			_searchField.setText("");
 			resetFilter();
 			_searchField.requestFocus();
 		});
+		clearButton.setPreferredSize(new Dimension(clearIcon.getIconWidth(), clearIcon.getIconHeight()));
+		clearButton.setBorder(BorderFactory.createEmptyBorder());
+		clearButton.setContentAreaFilled(false);
+		clearButton.setFocusPainted(false);
+		clearButton.setToolTipText("Clear search");
 		return clearButton;
 	}
 
@@ -230,7 +250,16 @@ public class AvailableItemPanel extends JPanel
 	private void resetFilter()
 	{
 		_availableItemsView.setModel(_availableItemsList.getModel()); // Restore original model
+		updateHint();
 		_searchField.requestFocusInWindow(); // Keep focus on the search field
+	}
+
+	// Choose the right empty-state hint: if items are loaded, an empty list means the search matched
+	// nothing; if none are loaded, it means the user still has to load them.
+	private void updateHint()
+	{
+		final boolean hasItems = _availableItemsList.getModel().getSize() > 0;
+		_hintList.setHint(hasItems ? HINT_NO_MATCH : HINT_NO_ITEMS);
 	}
 
 	// Method to filter items based on search input
@@ -251,6 +280,7 @@ public class AvailableItemPanel extends JPanel
 
 		// Update the availableItemsList with the filtered model
 		_availableItemsView.setModel(filteredModel);
+		updateHint();
 	}
 
 	private void createContextMenuToAvailableItems()
@@ -261,7 +291,58 @@ public class AvailableItemPanel extends JPanel
 			menu.item("Add as Product", () -> _onAddProduct.accept(item));
 			menu.separator();
 			menu.item("View Info", () -> showItemInfo(item));
+			menu.item("Export Icon...", () -> exportIcon(item));
 		});
+	}
+
+	// Save the item's icon (as decoded from the client .utx) to a PNG file the user chooses.
+	private void exportIcon(Item item)
+	{
+		if (item == null)
+		{
+			return;
+		}
+
+		final BufferedImage image = item.getIconImage();
+		if (image == null)
+		{
+			MessageUtils.showInfoMessage(SwingUtilities.getWindowAncestor(this), "This item has no icon to export.", "No icon");
+			return;
+		}
+
+		// Default to the icon's real asset name (e.g. weapon_sword_i00.png), falling back to the id.
+		final String baseName = (item.getIconTextureName() != null) ? item.getIconTextureName() : String.valueOf(item.getId());
+
+		// Reopen in the last folder an icon was exported to, so the user does not re-navigate each time.
+		final String lastExport = SettingsManager.getLastExportPath();
+		final File startDir = ((lastExport != null) && new File(lastExport).isDirectory()) ? new File(lastExport) : null;
+
+		final JFileChooser chooser = new JFileChooser();
+		chooser.setDialogTitle("Export icon as PNG");
+		chooser.setSelectedFile((startDir != null) ? new File(startDir, baseName + ".png") : new File(baseName + ".png"));
+		chooser.setFileFilter(new FileNameExtensionFilter("PNG image (*.png)", "png"));
+		if (chooser.showSaveDialog(SwingUtilities.getWindowAncestor(this)) != JFileChooser.APPROVE_OPTION)
+		{
+			return;
+		}
+
+		File file = chooser.getSelectedFile();
+		if (!file.getName().toLowerCase().endsWith(".png"))
+		{
+			file = new File(file.getParentFile(), file.getName() + ".png");
+		}
+
+		try
+		{
+			ImageIO.write(image, "png", file);
+			SettingsManager.setLastExportPath(file.getParent());
+			Sound.playSound("sys_enchant_success.wav");
+			MessageUtils.showInfoMessage(SwingUtilities.getWindowAncestor(this), "Saved:\n" + file.getAbsolutePath(), "Icon exported");
+		}
+		catch (Exception e)
+		{
+			MessageUtils.showErrorMessage(SwingUtilities.getWindowAncestor(this), "Could not export icon:\n" + e.getMessage(), "Export failed");
+		}
 	}
 
 	private void showItemInfo(Item item)

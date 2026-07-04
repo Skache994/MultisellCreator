@@ -24,10 +24,8 @@ package com.l2skale.multisell.ui.renders;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
-import java.awt.Image;
 
 import javax.swing.Icon;
-import javax.swing.ImageIcon;
 import javax.swing.JComponent;
 
 import com.l2skale.multisell.model.Item;
@@ -48,7 +46,7 @@ public class ItemSlot extends JComponent
 	public ItemSlot(Item item, int itemId, int size)
 	{
 		_size = size;
-		_icon = scaledIcon(item, size - 4);
+		_icon = (item != null) ? item.getScaledIcon(size - 4) : null;
 
 		final Dimension dim = new Dimension(size, size);
 		setPreferredSize(dim);
@@ -73,18 +71,5 @@ public class ItemSlot extends JComponent
 			final int y = (_size - _icon.getIconHeight()) / 2;
 			_icon.paintIcon(this, g, x, y);
 		}
-	}
-
-	// Wrapping in ImageIcon forces the scaled image to load synchronously (MediaTracker),
-	// so it is ready to paint immediately.
-	private static Icon scaledIcon(Item item, int iconSize)
-	{
-		if ((item == null) || (item.getIcon() == null) || (item.getIcon().getImage() == null))
-		{
-			return null;
-		}
-
-		final Image scaled = item.getIcon().getImage().getScaledInstance(iconSize, iconSize, Image.SCALE_SMOOTH);
-		return new ImageIcon(scaled);
 	}
 }

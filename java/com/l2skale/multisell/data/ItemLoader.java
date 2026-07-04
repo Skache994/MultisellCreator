@@ -41,13 +41,11 @@ import com.l2skale.multisell.model.Item;
 public class ItemLoader
 {
 	private final String itemsFolderPath;
-	private final String iconsFolderPath;
 
-	// Constructor to initialize paths.
-	public ItemLoader(String itemsFolderPath, String iconsFolderPath)
+	// Constructor to initialize the items folder path.
+	public ItemLoader(String itemsFolderPath)
 	{
 		this.itemsFolderPath = itemsFolderPath;
-		this.iconsFolderPath = iconsFolderPath;
 	}
 
 	// Load items from XML files.
@@ -106,11 +104,12 @@ public class ItemLoader
 				int id = Integer.parseInt(element.getAttribute("id"));
 				String name = element.getAttribute("name");
 				String type = element.getAttribute("type");
-				String iconName = getIconNameFromElement(element);
-				boolean isQuestItem = getIsQuestItemFromElement(element);
+				String iconName = getSetValue(element, "icon");
+				String crystalType = getSetValue(element, "crystal_type");
+				boolean isQuestItem = Boolean.parseBoolean(getSetValue(element, "is_questitem"));
 
 				// The icon is loaded lazily by Item on first use.
-				items.add(new Item(id, name, type, isQuestItem, iconName, iconsFolderPath));
+				items.add(new Item(id, name, type, isQuestItem, iconName, crystalType));
 			}
 		}
 		catch (Exception e)
@@ -121,8 +120,8 @@ public class ItemLoader
 		return items;
 	}
 
-	// Extracts the icon name from an XML element.
-	private String getIconNameFromElement(Element element)
+	// Returns the val of the item's <set name="..."> child, or null if that set is missing.
+	private String getSetValue(Element element, String setName)
 	{
 		NodeList setNodes = element.getElementsByTagName("set");
 		for (int j = 0; j < setNodes.getLength(); j++)
@@ -131,7 +130,7 @@ public class ItemLoader
 			if (setNode.getNodeType() == Node.ELEMENT_NODE)
 			{
 				Element setElement = (Element) setNode;
-				if (setElement.getAttribute("name").equals("icon"))
+				if (setElement.getAttribute("name").equals(setName))
 				{
 					return setElement.getAttribute("val");
 				}
@@ -139,25 +138,5 @@ public class ItemLoader
 		}
 
 		return null;
-	}
-
-	// Extracts whether the item is a quest item from an XML element.
-	private boolean getIsQuestItemFromElement(Element element)
-	{
-		NodeList setNodes = element.getElementsByTagName("set");
-		for (int j = 0; j < setNodes.getLength(); j++)
-		{
-			Node setNode = setNodes.item(j);
-			if (setNode.getNodeType() == Node.ELEMENT_NODE)
-			{
-				Element setElement = (Element) setNode;
-				if (setElement.getAttribute("name").equals("is_questitem"))
-				{
-					return Boolean.parseBoolean(setElement.getAttribute("val"));
-				}
-			}
-		}
-
-		return false; // Default value (if missing, it's false).
 	}
 }

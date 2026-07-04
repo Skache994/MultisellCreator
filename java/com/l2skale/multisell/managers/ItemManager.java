@@ -27,6 +27,7 @@ import java.util.Map;
 
 import com.l2skale.multisell.data.ItemLoader;
 import com.l2skale.multisell.model.Item;
+import com.l2skale.multisell.model.SpecialItems;
 
 /*
  * @author Skache
@@ -38,9 +39,9 @@ public class ItemManager
 	private final Map<Integer, Item> items = new HashMap<>();
 
 	// Constructor to initialize the ItemLoader.
-	public ItemManager(String itemsFolderPath, String iconsFolderPath)
+	public ItemManager(String itemsFolderPath)
 	{
-		this._itemLoader = new ItemLoader(itemsFolderPath, iconsFolderPath);
+		this._itemLoader = new ItemLoader(itemsFolderPath);
 	}
 
 	// Load items into memory.
@@ -65,10 +66,12 @@ public class ItemManager
 		}
 	}
 
-	// Retrieve an item by ID.
+	// Retrieve an item by ID. Falls back to a special (virtual currency) item for negative ids like
+	// PC Cafe points or Fame, which live in the server core rather than the datapack's item XML.
 	public Item getItemById(int id)
 	{
-		return items.get(id);
+		final Item item = items.get(id);
+		return (item != null) ? item : SpecialItems.get(id);
 	}
 
 	// Get all items.

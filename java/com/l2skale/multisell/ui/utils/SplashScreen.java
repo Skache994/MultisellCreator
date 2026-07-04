@@ -95,7 +95,7 @@ public class SplashScreen extends JWindow
 						parent.requestFocus();
 
 						// Play sound when the window appears.
-						Sound.playSound("inventory_open_01.wav");
+						Sound.playSound("system_open_01.wav");
 					}
 					dispose();
 				});

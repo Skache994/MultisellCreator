@@ -45,22 +45,24 @@ public class MenuBar
 	private static final String GITHUB_URL = "https://github.com/Skache994/MultisellCreator";
 	private static final String WEBSITE_URL = "http://www.l2skale.com";
 
-	public static JMenuBar createMenuBar(JFrame parentFrame, Runnable onOpenDatapack, Runnable onNewMultisell, Runnable onOpenMultisell, Runnable onSaveMultisell)
+	public static JMenuBar createMenuBar(JFrame parentFrame, Runnable onOpenDatapack, Runnable onNewMultisell, Runnable onOpenMultisell, Runnable onSaveMultisell, Runnable onDeleteMultisell)
 	{
 		JMenuBar menuBar = new JMenuBar();
 
 		// File Menu
 		JMenu fileMenu = new JMenu("File");
-		JMenuItem openDatapackItem = new JMenuItem("Open Datapack...");
+		JMenuItem openDatapackItem = new JMenuItem("Load Items...");
 		JMenuItem newItem = new JMenuItem("New Multisell");
 		JMenuItem openItem = new JMenuItem("Open Multisell...");
 		JMenuItem saveItem = new JMenuItem("Save Multisell");
+		JMenuItem deleteItem = new JMenuItem("Delete Multisell");
 		JMenuItem exitItem = new JMenuItem("Exit");
 
 		openDatapackItem.addActionListener(_ -> onOpenDatapack.run());
 		newItem.addActionListener(_ -> onNewMultisell.run());
 		openItem.addActionListener(_ -> onOpenMultisell.run());
 		saveItem.addActionListener(_ -> onSaveMultisell.run());
+		deleteItem.addActionListener(_ -> onDeleteMultisell.run());
 		exitItem.addActionListener(_ -> System.exit(0));
 
 		fileMenu.add(openDatapackItem);
@@ -68,6 +70,7 @@ public class MenuBar
 		fileMenu.add(newItem);
 		fileMenu.add(openItem);
 		fileMenu.add(saveItem);
+		fileMenu.add(deleteItem);
 		fileMenu.addSeparator();
 		fileMenu.add(exitItem);
 
@@ -75,18 +78,15 @@ public class MenuBar
 		JMenu helpMenu = new JMenu("Help");
 		JMenuItem howToItem = new JMenuItem("How to Use");
 		JMenuItem githubItem = new JMenuItem("GitHub");
-		JMenuItem websiteItem = new JMenuItem("Website");
 		JMenuItem aboutItem = new JMenuItem("About");
 
 		howToItem.addActionListener(_ -> showHowToDialog(parentFrame));
 		githubItem.addActionListener(_ -> browse(GITHUB_URL));
-		websiteItem.addActionListener(_ -> browse(WEBSITE_URL));
 		aboutItem.addActionListener(_ -> showAboutDialog(parentFrame));
 
 		helpMenu.add(howToItem);
 		helpMenu.addSeparator();
 		helpMenu.add(githubItem);
-		helpMenu.add(websiteItem);
 		helpMenu.addSeparator();
 		helpMenu.add(aboutItem);
 
@@ -104,7 +104,8 @@ public class MenuBar
 		final String html = "<html><body style='font-family:Arial; width:360px; color:" + textColor + ";'>" //
 			+ "<h3>How to use</h3>" //
 			+ "<ol>" //
-			+ "<li><b>Open Datapack</b> - point at your server's <i>game</i> (or <i>data</i>) folder to load items.</li>" //
+			+ "<li><b>Load Items</b> - point at your server's <i>game</i> (or <i>data</i>) folder to load items.</li>" //
+			+ "<li><b>Load Icons</b> (optional) - only if icons are missing, point at your Lineage 2 game folder.</li>" //
 			+ "<li><b>New</b> or <b>Open</b> a multisell.</li>" //
 			+ "<li><b>New Entry</b>, then add items (drag from the list or right-click) and set NPCs / options.</li>" //
 			+ "<li><b>Save</b> - writes <i>data/multisell/&lt;id&gt;.xml</i> into the datapack.</li>" //

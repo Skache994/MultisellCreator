@@ -11,7 +11,6 @@
 	<property name="src" location="java" />
 	<property name="resources" location="resources" />
 	<property name="launcher" location="launcher" />
-	<property name="data" location="data" />
 	<property name="release" location="../release" />
 	<property name="classes" location="${release}/classes" />
 	<property name="staging" location="${release}/staging" />
@@ -55,11 +54,10 @@
 	<target name="zip" depends="jar" description="Bundle the final product: MultisellCreator.zip.">
 		<delete file="${zipfile}" quiet="true" />
 		<!-- Everything is placed under a top-level MultisellCreator/ folder so it extracts tidily.
-		     The jar comes from staging; the launcher and item icons are pulled straight from source. -->
+		     The jar (which bundles the default Icon.utx) comes from staging; the launcher from source. -->
 		<zip destfile="${zipfile}" level="9">
 			<zipfileset dir="${staging}" prefix="MultisellCreator" includes="MultisellCreator.jar" />
 			<zipfileset dir="${launcher}" prefix="MultisellCreator" />
-			<zipfileset dir="${data}" prefix="MultisellCreator/data" />
 		</zip>
 	</target>
 

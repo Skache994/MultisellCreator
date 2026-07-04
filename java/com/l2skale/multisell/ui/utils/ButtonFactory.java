@@ -21,19 +21,62 @@
  */
 package com.l2skale.multisell.ui.utils;
 
+import java.awt.Color;
 import java.awt.event.ActionListener;
 
+import javax.swing.AbstractButton;
+import javax.swing.Icon;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 
 /*
+ * The single place UI controls are built, so every button and checkbox looks and sounds the same
+ * (a soft click on press). Classes just call these makers instead of wiring their own.
+ *
  * @author Skache
  */
 public class ButtonFactory
 {
+	private static final String CLICK_SOUND = "click_2.wav";
+
+	// A text button (Load Items, Save, New Entry, Edit NPCs...).
 	public static JButton createButton(String text, ActionListener action)
 	{
-		JButton button = new JButton(text);
+		final JButton button = new JButton(text);
+		addClick(button);
 		button.addActionListener(action);
 		return button;
+	}
+
+	// An icon-only button (theme toggle, clear search). Pass a null icon if it is set later.
+	public static JButton createIconButton(Icon icon, ActionListener action)
+	{
+		final JButton button = new JButton(icon);
+		addClick(button);
+		button.addActionListener(action);
+		return button;
+	}
+
+	// A red "danger" button for destructive actions (e.g. Delete). Reuses the standard click.
+	public static JButton createDangerButton(String text, ActionListener action)
+	{
+		final JButton button = createButton(text, action);
+		button.setBackground(new Color(170, 45, 45));
+		button.setForeground(Color.WHITE);
+		return button;
+	}
+
+	// A checkbox (applyTaxes, maintainEnchantment). Add your own state listener to the returned box.
+	public static JCheckBox createCheckBox(String text)
+	{
+		final JCheckBox box = new JCheckBox(text);
+		addClick(box);
+		return box;
+	}
+
+	// The one place the UI click lives; every maker above reuses it.
+	private static void addClick(AbstractButton button)
+	{
+		button.addActionListener(_ -> Sound.playSound(CLICK_SOUND));
 	}
 }

@@ -132,6 +132,15 @@ public class EntriesPanel extends JPanel
 		updateTitle();
 	}
 
+	// Reset to the empty "no multisell open" state (used after deleting/discarding a multisell).
+	public void clear()
+	{
+		_multisell = null;
+		_model.clear();
+		_title.setText("Entries");
+		_view.setHint("New or Open a multisell");
+	}
+
 	// Append a new entry to the list and select it.
 	public void addEntry(Entry entry)
 	{
