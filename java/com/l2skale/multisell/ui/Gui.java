@@ -48,6 +48,7 @@ import com.l2skale.multisell.data.MultisellLoader;
 import com.l2skale.multisell.data.MultisellSaver;
 import com.l2skale.multisell.datapack.Datapack;
 import com.l2skale.multisell.managers.ItemManager;
+import com.l2skale.multisell.managers.NpcManager;
 import com.l2skale.multisell.managers.SettingsManager;
 import com.l2skale.multisell.managers.ThemeManager;
 import com.l2skale.multisell.model.AvailableItemList;
@@ -75,6 +76,7 @@ public class Gui
 
 	private Datapack _datapack;
 	private ItemManager _itemManager;
+	private NpcManager _npcManager;
 	private RightPanel _rightPanel;
 	private JSplitPane _splitPane;
 	private Multisell _multisell;
@@ -237,6 +239,12 @@ public class Gui
 			{
 				_itemManager = new ItemManager(itemsDir.getPath());
 				_itemManager.loadItems();
+
+				// NPC names ride along on the same background load - a tiny id -> name map used to
+				// label the npcs a multisell is attached to (in the UI and as save comments).
+				_npcManager = new NpcManager(datapack.getNpcsDir().getPath());
+				_npcManager.loadNpcNames();
+
 				return _itemManager.getAllItems().size();
 			}
 
@@ -247,6 +255,7 @@ public class Gui
 				{
 					_availableItemsList.clear();
 					_availableItemsList.addItems(_itemManager.getAllItems().values());
+					_settingsPanel.setNpcNameLookup(_npcManager::getNpcName); // names are in - the editor can label ids
 					_loadItemsPulse.stop(); // items are in - the hint has done its job
 					Sound.playSound("inventory_open_01.wav");
 					MessageUtils.showInfoMessage(_frame, "Loaded " + get() + " items from:\n" + datapack, "Datapack loaded");
@@ -509,7 +518,7 @@ public class Gui
 
 		try
 		{
-			MultisellSaver.save(_multisell, file, _itemManager::getItemById);
+			MultisellSaver.save(_multisell, file, _itemManager::getItemById, _npcManager == null ? null : _npcManager::getNpcName);
 			_settingsPanel.setMultisell(_multisell);
 			_frame.setTitle("Multisell XML Creator  -  " + id + " (" + _multisell.getEntries().size() + " entries)");
 			MessageUtils.showInfoMessage(_frame, "Saved to:\n" + file.getAbsolutePath(), "Saved");

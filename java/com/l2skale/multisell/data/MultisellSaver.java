@@ -40,7 +40,8 @@ import com.l2skale.multisell.model.multisell.MultisellItem;
 public class MultisellSaver
 {
 	// itemLookup resolves item ids to their names for the inline comments (may be null).
-	public static void save(Multisell multisell, File file, IntFunction<Item> itemLookup) throws Exception
+	// npcLookup does the same for npc ids in the <npcs> block (may be null, returns null when unknown).
+	public static void save(Multisell multisell, File file, IntFunction<Item> itemLookup, IntFunction<String> npcLookup) throws Exception
 	{
 		final StringBuilder sb = new StringBuilder();
 		sb.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
@@ -67,7 +68,14 @@ public class MultisellSaver
 			sb.append("\t<npcs>\n");
 			for (int npcId : multisell.getNpcIds())
 			{
-				sb.append("\t\t<npc>").append(npcId).append("</npc>\n");
+				sb.append("\t\t<npc>").append(npcId).append("</npc>");
+				final String npcName = npcComment(npcId, npcLookup);
+				if (npcName != null)
+				{
+					// "--" is illegal inside an XML comment, so soften it just in case.
+					sb.append(" <!-- ").append(npcName.replace("--", "-")).append(" -->");
+				}
+				sb.append("\n");
 			}
 			sb.append("\t</npcs>\n");
 		}
@@ -90,6 +98,18 @@ public class MultisellSaver
 		sb.append("</list>\n");
 
 		Files.writeString(file.toPath(), sb.toString(), StandardCharsets.UTF_8);
+	}
+
+	// The inline comment for an <npc> line: the datapack name, or "CB" for the special -1 id
+	// (a community-board / "works from everywhere" multisell). Null means no comment.
+	private static String npcComment(int npcId, IntFunction<String> npcLookup)
+	{
+		if (npcId == -1)
+		{
+			return "CB";
+		}
+
+		return (npcLookup == null) ? null : npcLookup.apply(npcId);
 	}
 
 	// The schema path is relative to the file's own location, so its depth depends on how far

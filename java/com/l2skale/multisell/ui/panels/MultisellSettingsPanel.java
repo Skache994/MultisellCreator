@@ -22,18 +22,21 @@
 package com.l2skale.multisell.ui.panels;
 
 import java.awt.FlowLayout;
-import java.util.StringJoiner;
+import java.awt.Window;
+import java.util.List;
+import java.util.function.IntFunction;
 
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
-import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
+import javax.swing.SwingUtilities;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
 import com.l2skale.multisell.model.multisell.Multisell;
+import com.l2skale.multisell.ui.dialogs.NpcEditorDialog;
 import com.l2skale.multisell.ui.utils.ButtonFactory;
 
 /*
@@ -55,6 +58,9 @@ public class MultisellSettingsPanel extends JPanel
 	private final JTextField _useRate = new JTextField(6);
 
 	private Multisell _multisell;
+
+	// Resolves an npc id to its name for the editor (set once the datapack npcs are loaded; may be null).
+	private IntFunction<String> _npcNameLookup;
 
 	public MultisellSettingsPanel()
 	{
@@ -119,6 +125,12 @@ public class MultisellSettingsPanel extends JPanel
 		setControlsEnabled(false);
 	}
 
+	// Provide the npc id -> name lookup used to label ids in the editor (call after npcs load).
+	public void setNpcNameLookup(IntFunction<String> lookup)
+	{
+		_npcNameLookup = lookup;
+	}
+
 	// Bind the panel to a multisell (or null to clear it).
 	public void setMultisell(Multisell multisell)
 	{
@@ -145,34 +157,16 @@ public class MultisellSettingsPanel extends JPanel
 			return;
 		}
 
-		final StringJoiner current = new StringJoiner(", ");
-		for (int id : _multisell.getNpcIds())
+		final Window owner = SwingUtilities.getWindowAncestor(this);
+		final String title = "Edit NPCs" + (_multisell.getId() > 0 ? " - Multisell " + _multisell.getId() : "");
+		final List<Integer> result = NpcEditorDialog.edit(owner, title, _multisell.getNpcIds(), _npcNameLookup);
+		if (result == null)
 		{
-			current.add(String.valueOf(id));
-		}
-
-		final String input = JOptionPane.showInputDialog(this, "NPC ids allowed to open this multisell (comma-separated, empty = any):", current.toString());
-		if (input == null)
-		{
-			return;
+			return; // Cancelled - leave the list untouched.
 		}
 
 		_multisell.getNpcIds().clear();
-		for (String part : input.split(","))
-		{
-			final String trimmed = part.trim();
-			if (!trimmed.isEmpty())
-			{
-				try
-				{
-					_multisell.getNpcIds().add(Integer.parseInt(trimmed));
-				}
-				catch (NumberFormatException ignored)
-				{
-					// Skip anything that is not a number.
-				}
-			}
-		}
+		_multisell.getNpcIds().addAll(result);
 		updateNpcsLabel();
 	}
 

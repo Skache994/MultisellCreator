@@ -51,7 +51,7 @@ public class ItemListRenderer extends JLabel implements ListCellRenderer<Item>
 
 		setBackground(RowColors.background(isSelected));
 		setForeground(RowColors.foreground());
-		setBorder(isSelected ? BorderFactory.createLineBorder(Color.BLACK, 2) : null);
+		setBorder(isSelected ? BorderFactory.createLineBorder(Color.BLACK, 2) : BorderFactory.createMatteBorder(0, 0, 1, 0, RowColors.separator()));
 		setOpaque(true);
 
 		return this;

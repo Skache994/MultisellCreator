@@ -33,6 +33,7 @@ import java.io.File;
 public class Datapack
 {
 	private static final String ITEMS_PATH = "stats/items";
+	private static final String NPCS_PATH = "stats/npcs";
 	private static final String MULTISELL_PATH = "multisell";
 
 	private final File _root;
@@ -53,6 +54,12 @@ public class Datapack
 	public File getItemsDir()
 	{
 		return new File(_dataDir, ITEMS_PATH);
+	}
+
+	// <data>/stats/npcs - where the server npc definitions live (we read only id + name).
+	public File getNpcsDir()
+	{
+		return new File(_dataDir, NPCS_PATH);
 	}
 
 	// <data>/multisell - where multisell lists are read from and saved to.

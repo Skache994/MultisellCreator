@@ -28,12 +28,7 @@ import java.io.IOException;
 import java.util.Properties;
 
 /*
- * Stores user settings in a properties file under the user's home folder
- * (%USERPROFILE%/.multisellcreator/settings.properties on Windows).
- *
- * Nothing is ever written inside the app folder or the source repository, so the
- * same code behaves identically in the source build and the released jar - each
- * user keeps their own private settings outside both.
+ * Stores user settings in a properties file under the user's home folder.
  *
  * @author Skache
  */

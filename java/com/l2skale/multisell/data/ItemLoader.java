@@ -21,14 +21,9 @@
  */
 package com.l2skale.multisell.data;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-
-import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
@@ -36,100 +31,56 @@ import org.w3c.dom.NodeList;
 import com.l2skale.multisell.model.Item;
 
 /*
+ * Loads item definitions from the datapack's stats/items folder (and its custom/ subfolder).
+ * Only <item> elements that are DIRECT children of <list> are real definitions - nested
+ * <item> (e.g. rewards inside <capsuled_items>) carry just an id, no name/type, and would
+ * otherwise overwrite the real definition; the base loader already skips those.
+ *
  * @author Skache
  */
-public class ItemLoader
+public class ItemLoader extends XmlListLoader<List<Item>>
 {
-	private final String itemsFolderPath;
-
-	// Constructor to initialize the items folder path.
 	public ItemLoader(String itemsFolderPath)
 	{
-		this.itemsFolderPath = itemsFolderPath;
+		super(itemsFolderPath);
 	}
 
-	// Load items from XML files.
-	public List<Item> loadItems()
+	@Override
+	protected String elementTag()
 	{
-		List<Item> items = new ArrayList<>();
-		File folder = new File(itemsFolderPath);
-
-		// Check if the items folder is valid.
-		if (!folder.exists() || !folder.isDirectory())
-		{
-			System.err.println("Items folder not found: " + itemsFolderPath);
-			return items;
-		}
-
-		// List all XML files in the folder.
-		File[] files = folder.listFiles((_, name) -> name.endsWith(".xml"));
-		if (files != null)
-		{
-			// Parse items from each XML file.
-			for (File file : files)
-			{
-				items.addAll(parseItemsFromFile(file));
-			}
-		}
-
-		return items;
+		return "item";
 	}
 
-	// Parses a single XML file for items.
-	private List<Item> parseItemsFromFile(File file)
+	@Override
+	protected List<Item> createResult()
 	{
-		List<Item> items = new ArrayList<>();
-		try
-		{
-			// Set up XML parsing.
-			DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-			DocumentBuilder builder = factory.newDocumentBuilder();
-			Document doc = builder.parse(file);
-			final Element root = doc.getDocumentElement();
-			root.normalize();
+		return new ArrayList<>();
+	}
 
-			// Only <item> elements that are DIRECT children of <list> are real item definitions.
-			// Nested <item> (e.g. rewards inside <capsuled_items>) carry just an id, no name/type -
-			// reading those would overwrite the real definition and leave the item nameless.
-			NodeList children = root.getChildNodes();
-			for (int i = 0; i < children.getLength(); i++)
-			{
-				Node node = children.item(i);
-				if ((node.getNodeType() != Node.ELEMENT_NODE) || !"item".equals(node.getNodeName()))
-				{
-					continue;
-				}
+	@Override
+	protected void handle(Element element, List<Item> items)
+	{
+		final int id = Integer.parseInt(element.getAttribute("id"));
+		final String name = element.getAttribute("name");
+		final String type = element.getAttribute("type");
+		final String iconName = getSetValue(element, "icon");
+		final String crystalType = getSetValue(element, "crystal_type");
+		final boolean isQuestItem = Boolean.parseBoolean(getSetValue(element, "is_questitem"));
 
-				Element element = (Element) node;
-				int id = Integer.parseInt(element.getAttribute("id"));
-				String name = element.getAttribute("name");
-				String type = element.getAttribute("type");
-				String iconName = getSetValue(element, "icon");
-				String crystalType = getSetValue(element, "crystal_type");
-				boolean isQuestItem = Boolean.parseBoolean(getSetValue(element, "is_questitem"));
-
-				// The icon is loaded lazily by Item on first use.
-				items.add(new Item(id, name, type, isQuestItem, iconName, crystalType));
-			}
-		}
-		catch (Exception e)
-		{
-			e.printStackTrace();
-		}
-
-		return items;
+		// The icon is loaded lazily by Item on first use.
+		items.add(new Item(id, name, type, isQuestItem, iconName, crystalType));
 	}
 
 	// Returns the val of the item's <set name="..."> child, or null if that set is missing.
 	private String getSetValue(Element element, String setName)
 	{
-		NodeList setNodes = element.getElementsByTagName("set");
+		final NodeList setNodes = element.getElementsByTagName("set");
 		for (int j = 0; j < setNodes.getLength(); j++)
 		{
-			Node setNode = setNodes.item(j);
+			final Node setNode = setNodes.item(j);
 			if (setNode.getNodeType() == Node.ELEMENT_NODE)
 			{
-				Element setElement = (Element) setNode;
+				final Element setElement = (Element) setNode;
 				if (setElement.getAttribute("name").equals(setName))
 				{
 					return setElement.getAttribute("val");

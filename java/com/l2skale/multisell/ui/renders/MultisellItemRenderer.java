@@ -52,7 +52,6 @@ public class MultisellItemRenderer extends JPanel implements ListCellRenderer<Mu
 	public MultisellItemRenderer()
 	{
 		setLayout(new FlowLayout(FlowLayout.LEFT, 6, 3));
-		setBorder(BorderFactory.createEmptyBorder(1, 4, 1, 4));
 	}
 
 	public void setItemLookup(IntFunction<Item> itemLookup)
@@ -66,6 +65,7 @@ public class MultisellItemRenderer extends JPanel implements ListCellRenderer<Mu
 		removeAll();
 		setOpaque(true);
 		setBackground(RowColors.background(isSelected));
+		setBorder(BorderFactory.createCompoundBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, RowColors.separator()), BorderFactory.createEmptyBorder(1, 4, 1, 4)));
 
 		final Color fg = RowColors.foreground();
 		final Item item = _itemLookup == null ? null : _itemLookup.apply(value.getItemId());

@@ -22,61 +22,55 @@
 package com.l2skale.multisell.managers;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
-import com.l2skale.multisell.data.ItemLoader;
-import com.l2skale.multisell.model.Item;
-import com.l2skale.multisell.model.SpecialItems;
+import com.l2skale.multisell.data.NpcNameLoader;
 
 /*
+ * Holds the datapack's npc id and name :D
+ *
  * @author Skache
  */
-public class ItemManager
+public class NpcManager
 {
-	private final ItemLoader _itemLoader;
+	private final NpcNameLoader _npcNameLoader;
 
-	private final Map<Integer, Item> items = new HashMap<>();
+	private final Map<Integer, String> names = new HashMap<>();
 
-	// Constructor to initialize the ItemLoader.
-	public ItemManager(String itemsFolderPath)
+	// Constructor to initialize the NpcNameLoader.
+	public NpcManager(String npcsFolderPath)
 	{
-		this._itemLoader = new ItemLoader(itemsFolderPath);
+		this._npcNameLoader = new NpcNameLoader(npcsFolderPath);
 	}
 
-	// Load items into memory.
-	public void loadItems()
+	// Load npc names into memory.
+	public void loadNpcNames()
 	{
 		try
 		{
 			final long start = System.currentTimeMillis();
-			List<Item> loadedItems = _itemLoader.load();
-			items.clear();
-			for (Item item : loadedItems)
-			{
-				items.put(item.getId(), item);
-			}
+			Map<Integer, String> loadedNames = _npcNameLoader.load();
+			names.clear();
+			names.putAll(loadedNames);
 			final long ms = System.currentTimeMillis() - start;
-			System.out.println("[ItemManager] Parsed " + loadedItems.size() + " <item> elements -> " + items.size() + " unique item ids in " + ms + " ms.");
+			System.out.println("[NpcManager] Loaded " + names.size() + " named npc ids in " + ms + " ms.");
 		}
 		catch (Exception e)
 		{
-			System.err.println("Error loading items: " + e.getMessage());
+			System.err.println("Error loading npc names: " + e.getMessage());
 			e.printStackTrace();
 		}
 	}
 
-	// Retrieve an item by ID. Falls back to a special (virtual currency) item for negative ids like
-	// PC Cafe points or Fame, which live in the server core rather than the datapack's item XML.
-	public Item getItemById(int id)
+	// Retrieve an npc name by ID, or null if the datapack has no name for it.
+	public String getNpcName(int id)
 	{
-		final Item item = items.get(id);
-		return (item != null) ? item : SpecialItems.get(id);
+		return names.get(id);
 	}
 
-	// Get all items.
-	public Map<Integer, Item> getAllItems()
+	// Get all npc names.
+	public Map<Integer, String> getAllNpcNames()
 	{
-		return items;
+		return names;
 	}
 }

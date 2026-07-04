@@ -31,9 +31,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /*
- * Reads a Lineage 2 Unreal (.utx) texture package - the client's icon files. The file
- * must already be decrypted (a plain Unreal Engine 2 package); the tool never decrypts
- * client files itself. This parses the package tables (names, imports, exports) so the
+ * Reads a Lineage 2 (.utx) texture package - the client's icon files.
+ * This parses the package tables (names, imports, exports) so the
  * textures inside can be found by name.
  *
  * An item's icon value is "package.texture" (e.g. "icon.weapon_sword_i00"): the package

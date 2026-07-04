@@ -19,44 +19,51 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package com.l2skale.multisell.ui.renders;
+package com.l2skale.multisell.data;
 
-import java.awt.Color;
+import java.util.HashMap;
+import java.util.Map;
 
-import com.l2skale.multisell.managers.ThemeManager;
+import org.w3c.dom.Element;
 
 /*
- * The item list's selection/highlight colours, shared so every list (items,
- * ingredients, products, entries) highlights the same nice way. Single source
- * of truth - taken from the original ItemListRenderer.
- *
+ * Loads only the id -> name of every NPC in the datapack's stats/npcs folder (and its
+ * custom/ subfolder)
+ * 
  * @author Skache
  */
-public final class RowColors
+public class NpcNameLoader extends XmlListLoader<Map<Integer, String>>
 {
-	private RowColors()
+	public NpcNameLoader(String npcsFolderPath)
 	{
+		super(npcsFolderPath);
 	}
 
-	// Row background: purple/light-blue when selected, else the theme's list background.
-	public static Color background(boolean selected)
+	@Override
+	protected String elementTag()
 	{
-		final boolean dark = ThemeManager.isDarkMode();
-		if (selected)
+		return "npc";
+	}
+
+	@Override
+	protected Map<Integer, String> createResult()
+	{
+		return new HashMap<>();
+	}
+
+	@Override
+	protected void handle(Element element, Map<Integer, String> names)
+	{
+		final String name = element.getAttribute("name");
+
+		// Some npcs (EffectPoint, some Folk/Monster) carry no name - the client supplies it
+		// by id. We skip those; callers fall back to the bare id when the name is missing.
+		if (name.isEmpty())
 		{
-			return dark ? new Color(104, 93, 156) : new Color(204, 204, 255);
+			return;
 		}
-		return dark ? new Color(50, 50, 50) : Color.WHITE;
-	}
 
-	public static Color foreground()
-	{
-		return ThemeManager.isDarkMode() ? Color.WHITE : Color.BLACK;
-	}
-
-	// A subtle divider between rows, for lists that paint their own rows (e.g. the npc editor).
-	public static Color separator()
-	{
-		return ThemeManager.isDarkMode() ? new Color(70, 70, 70) : new Color(220, 220, 220);
+		final int id = Integer.parseInt(element.getAttribute("id"));
+		names.put(id, name);
 	}
 }

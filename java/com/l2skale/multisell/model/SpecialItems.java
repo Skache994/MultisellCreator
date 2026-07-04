@@ -27,6 +27,7 @@ import java.util.Map;
 /*
  * The server-side "special" multisell items - virtual currencies with negative ids - PC Cafe points,
  * Clan Reputation, Fame ...
+ * 
  * @author Skache
  */
 public final class SpecialItems

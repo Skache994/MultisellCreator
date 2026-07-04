@@ -57,7 +57,6 @@ public class EntryRowRenderer extends JPanel implements ListCellRenderer<Entry>
 	public EntryRowRenderer()
 	{
 		setLayout(new FlowLayout(FlowLayout.LEFT, 6, 4));
-		setBorder(BorderFactory.createEmptyBorder(2, 6, 2, 6));
 	}
 
 	public void setItemLookup(IntFunction<Item> itemLookup)
@@ -71,6 +70,7 @@ public class EntryRowRenderer extends JPanel implements ListCellRenderer<Entry>
 		removeAll();
 		setOpaque(true);
 		setBackground(RowColors.background(isSelected));
+		setBorder(BorderFactory.createCompoundBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, RowColors.separator()), BorderFactory.createEmptyBorder(2, 6, 2, 6)));
 
 		final Color fg = RowColors.foreground();
 
