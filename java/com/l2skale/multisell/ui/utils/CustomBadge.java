@@ -19,53 +19,40 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package com.l2skale.multisell.data;
+package com.l2skale.multisell.ui.utils;
 
-import java.util.HashMap;
-import java.util.Map;
-
-import org.w3c.dom.Element;
-
-import com.l2skale.multisell.model.NpcInfo;
+import java.awt.Color;
 
 /*
- * Loads only the id -> name of every NPC in the datapack's stats/npcs folder (and its
- * custom/ subfolder)
- * 
+ * The "custom" marker for items and npcs that come from a datapack custom/ subfolder: a small
+ * teal dot before the name plus the name tinted the same teal. Kept small on purpose so it sits
+ * next to a grade tag without crowding. Single source of truth for the custom look.
+ *
  * @author Skache
  */
-public class NpcNameLoader extends XmlListLoader<Map<Integer, NpcInfo>>
+public final class CustomBadge
 {
-	public NpcNameLoader(String npcsFolderPath)
+	// A teal that reads on both the dark and light list backgrounds, distinct from the amber
+	// quest tag and the grade colors.
+	public static final String HEX = "#3AAFA9";
+	public static final Color COLOR = Color.decode(HEX);
+
+	// The small dot shown before a custom name.
+	private static final String DOT = "●";
+
+	private CustomBadge()
 	{
-		super(npcsFolderPath);
 	}
 
-	@Override
-	protected String elementTag()
+	// An HTML fragment wrapping a name as custom (dot + tinted name), for use inside an <html> label.
+	public static String htmlName(String name)
 	{
-		return "npc";
+		return "<span style='color:" + HEX + ";'>" + DOT + " " + name + "</span>";
 	}
 
-	@Override
-	protected Map<Integer, NpcInfo> createResult()
+	// The "dot + name" text for a plain (non-HTML) label; pair with setForeground(COLOR).
+	public static String textName(String name)
 	{
-		return new HashMap<>();
-	}
-
-	@Override
-	protected void handle(Element element, Map<Integer, NpcInfo> names, boolean custom)
-	{
-		final String name = element.getAttribute("name");
-
-		// Some npcs (EffectPoint, some Folk/Monster) carry no name - the client supplies it
-		// by id. We skip those; callers fall back to the bare id when the name is missing.
-		if (name.isEmpty())
-		{
-			return;
-		}
-
-		final int id = Integer.parseInt(element.getAttribute("id"));
-		names.put(id, new NpcInfo(name, custom));
+		return DOT + " " + name;
 	}
 }

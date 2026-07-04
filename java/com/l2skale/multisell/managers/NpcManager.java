@@ -25,6 +25,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.l2skale.multisell.data.NpcNameLoader;
+import com.l2skale.multisell.model.NpcInfo;
 
 /*
  * Holds the datapack's npc id and name :D
@@ -35,7 +36,7 @@ public class NpcManager
 {
 	private final NpcNameLoader _npcNameLoader;
 
-	private final Map<Integer, String> names = new HashMap<>();
+	private final Map<Integer, NpcInfo> npcs = new HashMap<>();
 
 	// Constructor to initialize the NpcNameLoader.
 	public NpcManager(String npcsFolderPath)
@@ -49,11 +50,11 @@ public class NpcManager
 		try
 		{
 			final long start = System.currentTimeMillis();
-			Map<Integer, String> loadedNames = _npcNameLoader.load();
-			names.clear();
-			names.putAll(loadedNames);
+			Map<Integer, NpcInfo> loaded = _npcNameLoader.load();
+			npcs.clear();
+			npcs.putAll(loaded);
 			final long ms = System.currentTimeMillis() - start;
-			System.out.println("[NpcManager] Loaded " + names.size() + " named npc ids in " + ms + " ms.");
+			System.out.println("[NpcManager] Loaded " + npcs.size() + " named npc ids in " + ms + " ms.");
 		}
 		catch (Exception e)
 		{
@@ -65,12 +66,14 @@ public class NpcManager
 	// Retrieve an npc name by ID, or null if the datapack has no name for it.
 	public String getNpcName(int id)
 	{
-		return names.get(id);
+		final NpcInfo info = npcs.get(id);
+		return (info != null) ? info.name() : null;
 	}
 
-	// Get all npc names.
-	public Map<Integer, String> getAllNpcNames()
+	// Whether the npc with this id came from a stats/npcs/custom subfolder.
+	public boolean isCustomNpc(int id)
 	{
-		return names;
+		final NpcInfo info = npcs.get(id);
+		return (info != null) && info.custom();
 	}
 }

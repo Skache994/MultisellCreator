@@ -30,6 +30,7 @@ import javax.swing.JList;
 import javax.swing.ListCellRenderer;
 
 import com.l2skale.multisell.model.Item;
+import com.l2skale.multisell.ui.utils.CustomBadge;
 import com.l2skale.multisell.ui.utils.GradeBadge;
 
 /*
@@ -47,7 +48,8 @@ public class ItemListRenderer extends JLabel implements ListCellRenderer<Item>
 	{
 		setIcon(item.getScaledIcon(ICON_SIZE));
 		final String quest = item.isQuestItem() ? "<b style='color:#FFAA00;'>[Quest]</b> " : "";
-		setText("<html>" + quest + item.getName() + GradeBadge.htmlTag(item) + "</html>");
+		final String name = item.isCustom() ? CustomBadge.htmlName(item.getName()) : item.getName();
+		setText("<html>" + quest + name + GradeBadge.htmlTag(item) + "</html>");
 
 		setBackground(RowColors.background(isSelected));
 		setForeground(RowColors.foreground());

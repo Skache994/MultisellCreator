@@ -255,7 +255,7 @@ public class Gui
 				{
 					_availableItemsList.clear();
 					_availableItemsList.addItems(_itemManager.getAllItems().values());
-					_settingsPanel.setNpcNameLookup(_npcManager::getNpcName); // names are in - the editor can label ids
+					_settingsPanel.setNpcLookups(_npcManager::getNpcName, _npcManager::isCustomNpc); // names + custom flags for the editor
 					_loadItemsPulse.stop(); // items are in - the hint has done its job
 					Sound.playSound("inventory_open_01.wav");
 					MessageUtils.showInfoMessage(_frame, "Loaded " + get() + " items from:\n" + datapack, "Datapack loaded");

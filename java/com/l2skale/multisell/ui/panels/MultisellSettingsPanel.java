@@ -25,6 +25,7 @@ import java.awt.FlowLayout;
 import java.awt.Window;
 import java.util.List;
 import java.util.function.IntFunction;
+import java.util.function.IntPredicate;
 
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -61,6 +62,9 @@ public class MultisellSettingsPanel extends JPanel
 
 	// Resolves an npc id to its name for the editor (set once the datapack npcs are loaded; may be null).
 	private IntFunction<String> _npcNameLookup;
+
+	// Tells the editor whether an npc id is custom (from stats/npcs/custom); may be null.
+	private IntPredicate _npcCustomLookup;
 
 	public MultisellSettingsPanel()
 	{
@@ -125,10 +129,11 @@ public class MultisellSettingsPanel extends JPanel
 		setControlsEnabled(false);
 	}
 
-	// Provide the npc id -> name lookup used to label ids in the editor (call after npcs load).
-	public void setNpcNameLookup(IntFunction<String> lookup)
+	// Provide the npc lookups used to label ids in the editor (call after npcs load).
+	public void setNpcLookups(IntFunction<String> nameLookup, IntPredicate customLookup)
 	{
-		_npcNameLookup = lookup;
+		_npcNameLookup = nameLookup;
+		_npcCustomLookup = customLookup;
 	}
 
 	// Bind the panel to a multisell (or null to clear it).
@@ -159,7 +164,7 @@ public class MultisellSettingsPanel extends JPanel
 
 		final Window owner = SwingUtilities.getWindowAncestor(this);
 		final String title = "Edit NPCs" + (_multisell.getId() > 0 ? " - Multisell " + _multisell.getId() : "");
-		final List<Integer> result = NpcEditorDialog.edit(owner, title, _multisell.getNpcIds(), _npcNameLookup);
+		final List<Integer> result = NpcEditorDialog.edit(owner, title, _multisell.getNpcIds(), _npcNameLookup, _npcCustomLookup);
 		if (result == null)
 		{
 			return; // Cancelled - leave the list untouched.

@@ -19,53 +19,14 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package com.l2skale.multisell.data;
-
-import java.util.HashMap;
-import java.util.Map;
-
-import org.w3c.dom.Element;
-
-import com.l2skale.multisell.model.NpcInfo;
+package com.l2skale.multisell.model;
 
 /*
- * Loads only the id -> name of every NPC in the datapack's stats/npcs folder (and its
- * custom/ subfolder)
- * 
+ * The bit of npc data the tool needs: the display name, and whether the npc came from a
+ * stats/npcs/custom subfolder (server-added content).
+ *
  * @author Skache
  */
-public class NpcNameLoader extends XmlListLoader<Map<Integer, NpcInfo>>
+public record NpcInfo(String name, boolean custom)
 {
-	public NpcNameLoader(String npcsFolderPath)
-	{
-		super(npcsFolderPath);
-	}
-
-	@Override
-	protected String elementTag()
-	{
-		return "npc";
-	}
-
-	@Override
-	protected Map<Integer, NpcInfo> createResult()
-	{
-		return new HashMap<>();
-	}
-
-	@Override
-	protected void handle(Element element, Map<Integer, NpcInfo> names, boolean custom)
-	{
-		final String name = element.getAttribute("name");
-
-		// Some npcs (EffectPoint, some Folk/Monster) carry no name - the client supplies it
-		// by id. We skip those; callers fall back to the bare id when the name is missing.
-		if (name.isEmpty())
-		{
-			return;
-		}
-
-		final int id = Integer.parseInt(element.getAttribute("id"));
-		names.put(id, new NpcInfo(name, custom));
-	}
 }

@@ -52,6 +52,9 @@ public class Item implements Serializable
 	private final String _iconName;
 	private final String _crystalType;
 
+	// True when the definition came from a datapack custom/ subfolder (server-added content).
+	private boolean _isCustom;
+
 	private transient ImageIcon _icon;
 	private transient boolean _iconLoaded;
 	private transient Map<Integer, ImageIcon> _scaledIcons;
@@ -84,6 +87,17 @@ public class Item implements Serializable
 	public boolean isQuestItem()
 	{
 		return _isQuestItem;
+	}
+
+	// Whether this item is custom (loaded from a stats/items/custom subfolder).
+	public boolean isCustom()
+	{
+		return _isCustom;
+	}
+
+	public void setCustom(boolean custom)
+	{
+		_isCustom = custom;
 	}
 
 	// The item grade from crystal_type (D, C, B, A, S, S80, S84), or null when the item has no grade.

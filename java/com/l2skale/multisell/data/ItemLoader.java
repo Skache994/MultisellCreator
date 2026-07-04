@@ -58,7 +58,7 @@ public class ItemLoader extends XmlListLoader<List<Item>>
 	}
 
 	@Override
-	protected void handle(Element element, List<Item> items)
+	protected void handle(Element element, List<Item> items, boolean custom)
 	{
 		final int id = Integer.parseInt(element.getAttribute("id"));
 		final String name = element.getAttribute("name");
@@ -68,7 +68,9 @@ public class ItemLoader extends XmlListLoader<List<Item>>
 		final boolean isQuestItem = Boolean.parseBoolean(getSetValue(element, "is_questitem"));
 
 		// The icon is loaded lazily by Item on first use.
-		items.add(new Item(id, name, type, isQuestItem, iconName, crystalType));
+		final Item item = new Item(id, name, type, isQuestItem, iconName, crystalType);
+		item.setCustom(custom);
+		items.add(item);
 	}
 
 	// Returns the val of the item's <set name="..."> child, or null if that set is missing.

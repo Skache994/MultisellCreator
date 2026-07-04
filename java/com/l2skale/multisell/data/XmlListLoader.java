@@ -54,8 +54,9 @@ public abstract class XmlListLoader<R>
 	// A fresh, empty accumulator for one load run.
 	protected abstract R createResult();
 
-	// Handle one matching element, adding to the accumulator.
-	protected abstract void handle(Element element, R result);
+	// Handle one matching element, adding to the accumulator. 'custom' is true when the element's
+	// file lives under a custom/ subfolder (server-added content).
+	protected abstract void handle(Element element, R result, boolean custom);
 
 	// Walk the folder (and subfolders) and parse every matching element into a result.
 	public R load()
@@ -106,6 +107,8 @@ public abstract class XmlListLoader<R>
 	{
 		try
 		{
+			final boolean custom = isUnderCustomFolder(file);
+
 			final DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
 			final DocumentBuilder builder = factory.newDocumentBuilder();
 			final Document doc = builder.parse(file);
@@ -119,7 +122,7 @@ public abstract class XmlListLoader<R>
 				final Node node = children.item(i);
 				if ((node.getNodeType() == Node.ELEMENT_NODE) && tag.equals(node.getNodeName()))
 				{
-					handle((Element) node, result);
+					handle((Element) node, result, custom);
 				}
 			}
 		}
@@ -127,5 +130,25 @@ public abstract class XmlListLoader<R>
 		{
 			e.printStackTrace();
 		}
+	}
+
+	// A file is custom when any folder on its path (up to the loaded root) is named "custom".
+	private boolean isUnderCustomFolder(File file)
+	{
+		final File root = new File(folderPath);
+		File dir = file.getParentFile();
+		while (dir != null)
+		{
+			if (dir.getName().equalsIgnoreCase("custom"))
+			{
+				return true;
+			}
+			if (dir.equals(root))
+			{
+				break;
+			}
+			dir = dir.getParentFile();
+		}
+		return false;
 	}
 }

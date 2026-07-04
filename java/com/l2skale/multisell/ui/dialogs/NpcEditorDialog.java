@@ -34,6 +34,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.function.IntFunction;
+import java.util.function.IntPredicate;
 
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
@@ -49,6 +50,7 @@ import javax.swing.ScrollPaneConstants;
 
 import com.l2skale.multisell.ui.renders.RowColors;
 import com.l2skale.multisell.ui.utils.ButtonFactory;
+import com.l2skale.multisell.ui.utils.CustomBadge;
 import com.l2skale.multisell.ui.utils.ResourceIcons;
 
 /*
@@ -68,6 +70,7 @@ public class NpcEditorDialog extends JDialog
 	private static final int EVERYWHERE_ID = -1;
 
 	private final IntFunction<String> _nameLookup;
+	private final IntPredicate _customLookup;
 
 	// Insertion order preserved, duplicates ignored.
 	private final Set<Integer> _ids = new LinkedHashSet<>();
@@ -77,10 +80,11 @@ public class NpcEditorDialog extends JDialog
 
 	private boolean _saved = false;
 
-	private NpcEditorDialog(Window owner, String title, Collection<Integer> currentIds, IntFunction<String> nameLookup)
+	private NpcEditorDialog(Window owner, String title, Collection<Integer> currentIds, IntFunction<String> nameLookup, IntPredicate customLookup)
 	{
 		super(owner, title, ModalityType.APPLICATION_MODAL);
 		_nameLookup = nameLookup;
+		_customLookup = customLookup;
 		_ids.addAll(currentIds);
 
 		setLayout(new BorderLayout(0, 8));
@@ -96,9 +100,9 @@ public class NpcEditorDialog extends JDialog
 	}
 
 	// Shows the dialog and returns the edited ids on Save, or null if the user cancelled.
-	public static List<Integer> edit(Window owner, String title, Collection<Integer> currentIds, IntFunction<String> nameLookup)
+	public static List<Integer> edit(Window owner, String title, Collection<Integer> currentIds, IntFunction<String> nameLookup, IntPredicate customLookup)
 	{
-		final NpcEditorDialog dialog = new NpcEditorDialog(owner, title, currentIds, nameLookup);
+		final NpcEditorDialog dialog = new NpcEditorDialog(owner, title, currentIds, nameLookup, customLookup);
 		dialog.setVisible(true);
 		return dialog._saved ? new ArrayList<>(dialog._ids) : null;
 	}
@@ -212,8 +216,9 @@ public class NpcEditorDialog extends JDialog
 		idLabel.setForeground(foreground);
 		row.add(idLabel, BorderLayout.WEST);
 
-		final JLabel nameLabel = new JLabel(displayName(id));
-		nameLabel.setForeground(foreground);
+		final boolean custom = (_customLookup != null) && _customLookup.test(id);
+		final JLabel nameLabel = new JLabel(custom ? CustomBadge.textName(displayName(id)) : displayName(id));
+		nameLabel.setForeground(custom ? CustomBadge.COLOR : foreground);
 		row.add(nameLabel, BorderLayout.CENTER);
 
 		row.add(buildRemoveButton(id), BorderLayout.EAST);
