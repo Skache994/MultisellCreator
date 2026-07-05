@@ -55,7 +55,7 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 import com.l2skale.multisell.managers.SettingsManager;
 import com.l2skale.multisell.model.AvailableItemList;
 import com.l2skale.multisell.model.Item;
-import com.l2skale.multisell.ui.dnd.ItemExportTransferHandler;
+import com.l2skale.multisell.ui.dnd.DragHandler;
 import com.l2skale.multisell.ui.renders.ItemListRenderer;
 import com.l2skale.multisell.ui.utils.ButtonFactory;
 import com.l2skale.multisell.ui.utils.Fonts;
@@ -184,9 +184,9 @@ public class AvailableItemPanel extends JPanel
 		_availableItemsView.setFixedCellWidth(40);
 		updateHint();
 
-		// Setup drag
+		// Drag source only: items are dragged out to be added to an entry, but nothing drops here.
 		_availableItemsView.setDragEnabled(true);
-		_availableItemsView.setTransferHandler(new ItemExportTransferHandler());
+		_availableItemsView.setTransferHandler(new DragHandler(_availableItemsView, null));
 
 		JScrollPane scrollPane = new JScrollPane(_availableItemsView);
 		scrollPane.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));

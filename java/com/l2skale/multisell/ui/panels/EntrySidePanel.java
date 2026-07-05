@@ -37,7 +37,7 @@ import javax.swing.JScrollPane;
 
 import com.l2skale.multisell.model.Item;
 import com.l2skale.multisell.model.multisell.MultisellItem;
-import com.l2skale.multisell.ui.dnd.AddItemTransferHandler;
+import com.l2skale.multisell.ui.dnd.DragHandler;
 import com.l2skale.multisell.ui.renders.MultisellItemRenderer;
 import com.l2skale.multisell.ui.utils.Fonts;
 import com.l2skale.multisell.ui.utils.HintList;
@@ -136,7 +136,22 @@ public class EntrySidePanel extends JPanel
 	{
 		_view.setDragEnabled(true);
 		_view.setDropMode(DropMode.INSERT);
-		_view.setTransferHandler(new AddItemTransferHandler(_view, onDrop, onReorder));
+		_view.setTransferHandler(new DragHandler(_view, (payload, targetIndex) ->
+		{
+			// An item dragged from the catalog - add it here.
+			if (payload.value() instanceof Item item)
+			{
+				return () -> onDrop.accept(item);
+			}
+
+			// One of this list's own rows dragged within it - reorder.
+			if (payload.sourceList() == _view)
+			{
+				return () -> onReorder.accept(payload.sourceIndex(), targetIndex);
+			}
+
+			return null; // Anything else (e.g. a row from another list) is refused.
+		}));
 	}
 
 	private void installContextMenu()

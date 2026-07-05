@@ -36,7 +36,7 @@ import javax.swing.JScrollPane;
 import com.l2skale.multisell.model.Item;
 import com.l2skale.multisell.model.multisell.Entry;
 import com.l2skale.multisell.model.multisell.Multisell;
-import com.l2skale.multisell.ui.dnd.ListExportTransferHandler;
+import com.l2skale.multisell.ui.dnd.DragHandler;
 import com.l2skale.multisell.ui.renders.EntryRowRenderer;
 import com.l2skale.multisell.ui.utils.Fonts;
 import com.l2skale.multisell.ui.utils.HintList;
@@ -163,7 +163,9 @@ public class EntriesPanel extends JPanel
 	{
 		_view.setDragEnabled(true);
 		_view.setDropMode(DropMode.INSERT);
-		_view.setTransferHandler(new ListExportTransferHandler(_view, onReorder));
+		_view.setTransferHandler(new DragHandler(_view, (payload, targetIndex) ->
+			// Only this list's own rows reorder here; anything else is refused.
+			(payload.sourceList() == _view) ? () -> onReorder.accept(payload.sourceIndex(), targetIndex) : null));
 	}
 
 	// Tell the list that one entry changed so its row is re-rendered.

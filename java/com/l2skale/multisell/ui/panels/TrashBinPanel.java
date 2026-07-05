@@ -38,7 +38,8 @@ import javax.swing.ImageIcon;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
-import com.l2skale.multisell.ui.dnd.LocalObjectTransferable;
+import com.l2skale.multisell.model.Item;
+import com.l2skale.multisell.ui.dnd.DragPayload;
 import com.l2skale.multisell.ui.utils.ResourceIcons;
 import com.l2skale.multisell.ui.utils.Sound;
 
@@ -110,8 +111,13 @@ public class TrashBinPanel extends JPanel
 			@Override
 			public void dragEnter(DropTargetDragEvent event)
 			{
-				// An item is being dragged onto the bin - show the "open" icon.
-				_trashBin.setIcon(_trashIconDrag);
+				updateDrag(event);
+			}
+
+			@Override
+			public void dragOver(DropTargetDragEvent event)
+			{
+				updateDrag(event);
 			}
 
 			@Override
@@ -120,21 +126,43 @@ public class TrashBinPanel extends JPanel
 				_trashBin.setIcon(_trashIcon);
 			}
 
+			// Accept only what the bin deletes (lines and entries): open the bin and allow the drop.
+			// A catalog item is refused, so the cursor shows the "no drop" sign and the bin stays shut.
+			private void updateDrag(DropTargetDragEvent event)
+			{
+				if (canDrop(event))
+				{
+					event.acceptDrag(DnDConstants.ACTION_MOVE);
+					_trashBin.setIcon(_trashIconDrag);
+				}
+				else
+				{
+					event.rejectDrag();
+					_trashBin.setIcon(_trashIcon);
+				}
+			}
+
 			@Override
 			public void drop(DropTargetDropEvent event)
 			{
 				try
 				{
 					final Transferable transferable = event.getTransferable();
-					if (transferable.isDataFlavorSupported(LocalObjectTransferable.FLAVOR))
+					if (transferable.isDataFlavorSupported(DragPayload.FLAVOR))
 					{
 						event.acceptDrop(DnDConstants.ACTION_MOVE);
-						final Object value = transferable.getTransferData(LocalObjectTransferable.FLAVOR);
-						if (_onDelete != null)
+						final Object value = ((DragPayload) transferable.getTransferData(DragPayload.FLAVOR)).value();
+
+						// The trash deletes multisell content (lines and entries) - never catalog items.
+						if ((_onDelete != null) && !(value instanceof Item))
 						{
 							_onDelete.accept(value);
+							event.dropComplete(true);
 						}
-						event.dropComplete(true);
+						else
+						{
+							event.dropComplete(false);
+						}
 					}
 					else
 					{
@@ -162,5 +190,25 @@ public class TrashBinPanel extends JPanel
 	public void setOnDelete(Consumer<Object> onDelete)
 	{
 		_onDelete = onDelete;
+	}
+
+	// Whether the current drag holds something the bin deletes - a line or entry, not a catalog item.
+	// If the value cannot be read mid-drag we accept: the drop handler still guards against items.
+	private static boolean canDrop(DropTargetDragEvent event)
+	{
+		if (!event.isDataFlavorSupported(DragPayload.FLAVOR))
+		{
+			return false;
+		}
+
+		try
+		{
+			final Object value = ((DragPayload) event.getTransferable().getTransferData(DragPayload.FLAVOR)).value();
+			return !(value instanceof Item);
+		}
+		catch (Exception e)
+		{
+			return true;
+		}
 	}
 }

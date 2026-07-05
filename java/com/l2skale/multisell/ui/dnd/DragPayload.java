@@ -25,43 +25,53 @@ import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
 
-import com.l2skale.multisell.model.Item;
+import javax.swing.JList;
 
 /*
+ * The one thing every drag in the app carries: the dragged value (an Item from the catalog, or a
+ * MultisellItem or Entry row), the list it came from, and its row there. A drop target decides what
+ * to do purely from this - the source list tells it the origin (and so the type), the index lets it
+ * reorder. It carries itself as the Transferable, so there is a single flavor for the whole app.
+ *
  * @author Skache
  */
-public class ItemTransferable implements Transferable
+public record DragPayload(Object value, JList<?> sourceList, int sourceIndex) implements Transferable
 {
-	public static final DataFlavor ITEM_FLAVOR = new DataFlavor(Item.class, "Item");
-	private static final DataFlavor[] SUPPORTED_FLAVORS =
-	{ ITEM_FLAVOR };
-
-	private final Item _item;
-
-	public ItemTransferable(Item item)
-	{
-		_item = item;
-	}
+	public static final DataFlavor FLAVOR = createFlavor();
+	private static final DataFlavor[] FLAVORS =
+	{ FLAVOR };
 
 	@Override
 	public DataFlavor[] getTransferDataFlavors()
 	{
-		return SUPPORTED_FLAVORS;
+		return FLAVORS;
 	}
 
 	@Override
 	public boolean isDataFlavorSupported(DataFlavor flavor)
 	{
-		return flavor.equals(ITEM_FLAVOR);
+		return FLAVOR.equals(flavor);
 	}
 
 	@Override
 	public Object getTransferData(DataFlavor flavor) throws UnsupportedFlavorException
 	{
-		if (flavor.equals(ITEM_FLAVOR))
+		if (FLAVOR.equals(flavor))
 		{
-			return _item;
+			return this;
 		}
 		throw new UnsupportedFlavorException(flavor);
+	}
+
+	private static DataFlavor createFlavor()
+	{
+		try
+		{
+			return new DataFlavor(DataFlavor.javaJVMLocalObjectMimeType + ";class=" + DragPayload.class.getName());
+		}
+		catch (ClassNotFoundException e)
+		{
+			throw new IllegalStateException(e);
+		}
 	}
 }
