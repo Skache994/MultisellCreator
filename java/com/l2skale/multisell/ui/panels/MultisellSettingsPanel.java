@@ -125,7 +125,7 @@ public class MultisellSettingsPanel extends JPanel
 			return;
 		}
 
-		_title.setText("Multisell " + (multisell.getId() > 0 ? String.valueOf(multisell.getId()) : "(new)"));
+		_title.setText("Multisell " + (!multisell.getId().isEmpty() ? multisell.getId() : "(new)"));
 		updateNpcsLabel();
 		setControlsEnabled(true);
 	}
@@ -191,7 +191,7 @@ public class MultisellSettingsPanel extends JPanel
 		}
 
 		final Window owner = SwingUtilities.getWindowAncestor(this);
-		final String title = "Edit NPCs" + (_multisell.getId() > 0 ? " - Multisell " + _multisell.getId() : "");
+		final String title = "Edit NPCs" + (!_multisell.getId().isEmpty() ? " - Multisell " + _multisell.getId() : "");
 		final List<Integer> result = NpcEditorDialog.edit(owner, title, _multisell.getNpcIds(), _npcNameLookup, _npcCustomLookup);
 		if (result == null)
 		{

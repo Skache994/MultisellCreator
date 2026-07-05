@@ -151,7 +151,7 @@ public class EntriesPanel extends JPanel
 
 	private void updateTitle()
 	{
-		final String id = ((_multisell != null) && (_multisell.getId() > 0)) ? String.valueOf(_multisell.getId()) : "(new)";
+		final String id = ((_multisell != null) && !_multisell.getId().isEmpty()) ? _multisell.getId() : "(new)";
 		_title.setText("Entries  -  multisell " + id + "  (" + _model.getSize() + ")");
 	}
 

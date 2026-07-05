@@ -41,7 +41,10 @@ import java.util.Set;
  */
 public class Multisell
 {
-	private int _id;
+	// The file name without .xml (e.g. "001"). This IS the multisell's identity - the same string
+	// on open, on screen and on save - so the file keeps its exact name. Empty means a new one whose
+	// name has not been set yet.
+	private String _id;
 
 	// <list> attribute values, keyed by name, in the order they were added/loaded. Values are the
 	// raw XML text (e.g. "true", "1.5"); booleans are stored only when true, matching the datapack.
@@ -50,19 +53,19 @@ public class Multisell
 	private final Set<Integer> _npcIds = new LinkedHashSet<>();
 	private final List<Entry> _entries = new ArrayList<>();
 
-	public Multisell(int id)
+	public Multisell(String id)
 	{
-		_id = id;
+		_id = (id == null) ? "" : id;
 	}
 
-	public int getId()
+	public String getId()
 	{
 		return _id;
 	}
 
-	public void setId(int id)
+	public void setId(String id)
 	{
-		_id = id;
+		_id = (id == null) ? "" : id;
 	}
 
 	// All <list> attributes in order, for the saver to write back verbatim.

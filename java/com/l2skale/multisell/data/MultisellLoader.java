@@ -138,17 +138,10 @@ public class MultisellLoader
 		return item;
 	}
 
-	// The list id is the file name without the .xml extension (e.g. 1000.xml -> 1000).
-	private static int parseId(File file)
+	// The id is the file name without the .xml extension (e.g. 001.xml -> "001"), kept verbatim so
+	// the file keeps its exact name on save.
+	private static String parseId(File file)
 	{
-		final String name = file.getName().replaceFirst("(?i)\\.xml$", "");
-		try
-		{
-			return Integer.parseInt(name);
-		}
-		catch (NumberFormatException e)
-		{
-			return 0; // Not a numeric name; caller can set a proper id before saving.
-		}
+		return file.getName().replaceFirst("(?i)\\.xml$", "");
 	}
 }

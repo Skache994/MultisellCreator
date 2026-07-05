@@ -469,7 +469,7 @@ public class Gui
 			return;
 		}
 
-		_multisell = new Multisell(0);
+		_multisell = new Multisell(""); // Name is set when it is first saved.
 		_multisellDir = null; // New multisell has no source folder yet; save falls back to the datapack's multisell dir.
 		_rightPanel.getEntriesPanel().setMultisell(_multisell, _itemManager::getItemById);
 		_settingsPanel.setMultisell(_multisell);
@@ -550,21 +550,17 @@ public class Gui
 			return;
 		}
 
-		final String suggested = _multisell.getId() > 0 ? String.valueOf(_multisell.getId()) : "";
-		final String input = JOptionPane.showInputDialog(_frame, "Save as multisell id (number = file name):", suggested);
+		final String input = JOptionPane.showInputDialog(_frame, "Save as multisell id (number = file name):", _multisell.getId());
 		if (input == null)
 		{
 			return;
 		}
 
-		final int id;
-		try
+		// The id IS the file name (server requires a plain number, e.g. 001.xml), so keep it verbatim.
+		final String id = input.trim();
+		if (!id.matches("\\d+"))
 		{
-			id = Integer.parseInt(input.trim());
-		}
-		catch (NumberFormatException e)
-		{
-			MessageUtils.showErrorMessage(_frame, "The id must be a number.", "Invalid id");
+			MessageUtils.showErrorMessage(_frame, "The id must be a number (it becomes the file name, e.g. 001).", "Invalid id");
 			return;
 		}
 
@@ -586,6 +582,7 @@ public class Gui
 		try
 		{
 			MultisellSaver.save(_multisell, file, _itemManager::getItemById, _npcManager == null ? null : _npcManager::getNpcName);
+			_multisellDir = file.getParentFile();
 			_settingsPanel.setMultisell(_multisell);
 			_frame.setTitle("Multisell XML Creator  -  " + id + " (" + _multisell.getEntries().size() + " entries)");
 			MessageUtils.showInfoMessage(_frame, "Saved to:\n" + file.getAbsolutePath(), "Saved");
@@ -606,9 +603,9 @@ public class Gui
 			return;
 		}
 
-		// The file this multisell maps to (same path logic as Save). A new/unsaved one has no file yet.
+		// The file this multisell maps to: its id is the file name. A new/unsaved one has no id yet.
 		final File dir = (_multisellDir != null) ? _multisellDir : (_datapack != null ? _datapack.getMultisellDir() : null);
-		final File file = ((_multisell.getId() > 0) && (dir != null)) ? new File(dir, _multisell.getId() + ".xml") : null;
+		final File file = (!_multisell.getId().isEmpty() && (dir != null)) ? new File(dir, _multisell.getId() + ".xml") : null;
 
 		if ((file == null) || !file.exists())
 		{
