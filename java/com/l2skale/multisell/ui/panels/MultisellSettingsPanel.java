@@ -26,7 +26,6 @@ import java.awt.FlowLayout;
 import java.awt.Window;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Consumer;
 import java.util.function.IntFunction;
 import java.util.function.IntPredicate;
 
@@ -37,8 +36,6 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
 
 import com.l2skale.multisell.model.multisell.AttributeType;
 import com.l2skale.multisell.model.multisell.Multisell;
@@ -46,6 +43,7 @@ import com.l2skale.multisell.model.multisell.MultisellSchema;
 import com.l2skale.multisell.model.multisell.SchemaAttribute;
 import com.l2skale.multisell.ui.dialogs.NpcEditorDialog;
 import com.l2skale.multisell.ui.utils.ButtonFactory;
+import com.l2skale.multisell.ui.utils.TextFields;
 import com.l2skale.multisell.ui.utils.WrapLayout;
 
 /*
@@ -166,8 +164,8 @@ public class MultisellSettingsPanel extends JPanel
 		if (attribute.getType() == AttributeType.BOOLEAN)
 		{
 			final JCheckBox box = ButtonFactory.createCheckBox(name);
-			box.setSelected(_multisell.getListBoolean(name));
-			box.addActionListener(_ -> _multisell.setListBoolean(name, box.isSelected()));
+			box.setSelected(_multisell.getListAttributes().getBoolean(name));
+			box.addActionListener(_ -> _multisell.getListAttributes().setBoolean(name, box.isSelected()));
 			return box;
 		}
 
@@ -177,8 +175,8 @@ public class MultisellSettingsPanel extends JPanel
 		holder.add(new JLabel(name + ":"));
 
 		final JTextField field = new JTextField(6);
-		field.setText(nullToEmpty(_multisell.getListAttribute(name)));
-		onTextChange(field, text -> _multisell.setListAttribute(name, text.trim()));
+		field.setText(nullToEmpty(_multisell.getListAttributes().get(name)));
+		TextFields.onChange(field, text -> _multisell.getListAttributes().set(name, text.trim()));
 		holder.add(field);
 		return holder;
 	}
@@ -217,30 +215,5 @@ public class MultisellSettingsPanel extends JPanel
 	private static String nullToEmpty(String value)
 	{
 		return value == null ? "" : value;
-	}
-
-	// Call onChange with the field's current text whenever it changes (typed, pasted, or cleared).
-	private static void onTextChange(JTextField field, Consumer<String> onChange)
-	{
-		field.getDocument().addDocumentListener(new DocumentListener()
-		{
-			@Override
-			public void insertUpdate(DocumentEvent e)
-			{
-				onChange.accept(field.getText());
-			}
-
-			@Override
-			public void removeUpdate(DocumentEvent e)
-			{
-				onChange.accept(field.getText());
-			}
-
-			@Override
-			public void changedUpdate(DocumentEvent e)
-			{
-				onChange.accept(field.getText());
-			}
-		});
 	}
 }

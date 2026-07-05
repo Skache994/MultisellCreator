@@ -51,8 +51,6 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextField;
 import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
 import com.l2skale.multisell.managers.SettingsManager;
@@ -61,11 +59,13 @@ import com.l2skale.multisell.model.Item;
 import com.l2skale.multisell.ui.dnd.ItemExportTransferHandler;
 import com.l2skale.multisell.ui.renders.ItemListRenderer;
 import com.l2skale.multisell.ui.utils.ButtonFactory;
+import com.l2skale.multisell.ui.utils.Fonts;
 import com.l2skale.multisell.ui.utils.HintList;
 import com.l2skale.multisell.ui.utils.ListContextMenu;
 import com.l2skale.multisell.ui.utils.MessageUtils;
 import com.l2skale.multisell.ui.utils.ResourceIcons;
 import com.l2skale.multisell.ui.utils.Sound;
+import com.l2skale.multisell.ui.utils.TextFields;
 
 /*
  * @author Skache
@@ -103,7 +103,7 @@ public class AvailableItemPanel extends JPanel
 
 		// Add available items label
 		JLabel availableItemsLabel = new JLabel("Search Available Items");
-		availableItemsLabel.setFont(new Font("Arial", Font.BOLD, 14));
+		availableItemsLabel.setFont(Fonts.SECTION_TITLE);
 		availableItemsLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
 		northPanel.add(availableItemsLabel);
 
@@ -165,30 +165,8 @@ public class AvailableItemPanel extends JPanel
 			}
 		});
 
-		// Document listener
-		_searchField.getDocument().addDocumentListener(new DocumentListener()
-		{
-			public void insertUpdate(DocumentEvent e)
-			{
-				update();
-			}
-
-			public void removeUpdate(DocumentEvent e)
-			{
-				update();
-			}
-
-			public void changedUpdate(DocumentEvent e)
-			{
-				update();
-			}
-
-			private void update()
-			{
-				boolean hasText = _searchField.getText().length() > 0;
-				clearButton.setVisible(hasText);
-			}
-		});
+		// Show the clear button only while there is search text.
+		TextFields.onChange(_searchField, text -> clearButton.setVisible(!text.isEmpty()));
 
 		northPanel.add(Box.createRigidArea(new Dimension(0, 5)));
 		northPanel.add(searchPanel);

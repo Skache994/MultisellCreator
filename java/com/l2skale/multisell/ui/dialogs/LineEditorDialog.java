@@ -114,12 +114,12 @@ public final class LineEditorDialog
 		if (attribute.getType() == AttributeType.BOOLEAN)
 		{
 			final JCheckBox box = new JCheckBox();
-			box.setSelected(item.getBooleanExtra(name));
+			box.setSelected(item.getExtras().getBoolean(name));
 			return box;
 		}
 
 		final JTextField field = new JTextField(8);
-		final String current = item.getExtra(name);
+		final String current = item.getExtras().get(name);
 		field.setText(current == null ? "" : current);
 		return field;
 	}
@@ -154,11 +154,11 @@ public final class LineEditorDialog
 			final String name = _attribute.getName();
 			if (_control instanceof JCheckBox box)
 			{
-				item.setExtra(name, box.isSelected() ? "true" : null);
+				item.getExtras().set(name, box.isSelected() ? "true" : null);
 			}
 			else if (_control instanceof JTextField field)
 			{
-				item.setExtra(name, field.getText().trim());
+				item.getExtras().set(name, field.getText().trim());
 			}
 		}
 	}

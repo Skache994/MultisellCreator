@@ -26,6 +26,7 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
+import java.awt.Font;
 import java.awt.Image;
 import java.awt.Window;
 import java.util.ArrayList;
@@ -40,17 +41,19 @@ import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
+import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
-import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextField;
 import javax.swing.ScrollPaneConstants;
+import javax.swing.SwingConstants;
 
 import com.l2skale.multisell.ui.renders.RowColors;
 import com.l2skale.multisell.ui.utils.ButtonFactory;
 import com.l2skale.multisell.ui.utils.CustomBadge;
+import com.l2skale.multisell.ui.utils.MessageUtils;
 import com.l2skale.multisell.ui.utils.ResourceIcons;
 
 /*
@@ -89,7 +92,7 @@ public class NpcEditorDialog extends JDialog
 
 		setLayout(new BorderLayout(0, 8));
 		add(buildAddBar(), BorderLayout.NORTH);
-		add(buildRowsScroll(), BorderLayout.CENTER);
+		add(buildCenter(), BorderLayout.CENTER);
 		add(buildButtons(), BorderLayout.SOUTH);
 
 		rebuildRows();
@@ -121,6 +124,42 @@ public class NpcEditorDialog extends JDialog
 		return bar;
 	}
 
+	// The list area: a column header on top of the scrolling rows, both column-aligned.
+	private JComponent buildCenter()
+	{
+		final JPanel center = new JPanel(new BorderLayout());
+		center.add(buildHeader(), BorderLayout.NORTH);
+		center.add(buildRowsScroll(), BorderLayout.CENTER);
+		return center;
+	}
+
+	// "ID   Name   Remove" header, laid out like a row so the columns line up with it.
+	private JComponent buildHeader()
+	{
+		final JPanel header = new JPanel(new BorderLayout(8, 0));
+		header.setOpaque(true);
+		header.setBackground(RowColors.background(false));
+		header.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, RowColors.separator()), BorderFactory.createEmptyBorder(4, 10, 4, 10)));
+
+		header.add(headerLabel("ID", 60, SwingConstants.LEFT), BorderLayout.WEST);
+		header.add(headerLabel("Name", 0, SwingConstants.LEFT), BorderLayout.CENTER);
+		header.add(headerLabel("Remove", 0, SwingConstants.RIGHT), BorderLayout.EAST);
+		return header;
+	}
+
+	// A bold column label; width > 0 fixes it (the ID column, to match the id cells).
+	private static JLabel headerLabel(String text, int width, int align)
+	{
+		final JLabel label = new JLabel(text, align);
+		if (width > 0)
+		{
+			label.setPreferredSize(new Dimension(width, 20));
+		}
+		label.setForeground(RowColors.foreground());
+		label.setFont(label.getFont().deriveFont(Font.BOLD));
+		return label;
+	}
+
 	private JScrollPane buildRowsScroll()
 	{
 		_rowsPanel.setLayout(new BoxLayout(_rowsPanel, BoxLayout.Y_AXIS));
@@ -131,6 +170,7 @@ public class NpcEditorDialog extends JDialog
 		_rowsPanel.setBackground(RowColors.background(false));
 
 		final JScrollPane scroll = new JScrollPane(_rowsPanel, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+		scroll.setBorder(BorderFactory.createEmptyBorder()); // no border, so the header and rows share the same left edge
 		scroll.getViewport().setBackground(RowColors.background(false));
 		scroll.getVerticalScrollBar().setUnitIncrement(16);
 		return scroll;
@@ -164,7 +204,7 @@ public class NpcEditorDialog extends JDialog
 		}
 		catch (NumberFormatException ex)
 		{
-			JOptionPane.showMessageDialog(this, "\"" + text + "\" is not a valid npc id.", "Invalid id", JOptionPane.WARNING_MESSAGE);
+			MessageUtils.showWarningMessage(this, "\"" + text + "\" is not a valid npc id.", "Invalid id");
 			return;
 		}
 

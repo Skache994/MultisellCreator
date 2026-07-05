@@ -22,7 +22,6 @@
 package com.l2skale.multisell.ui.panels;
 
 import java.awt.BorderLayout;
-import java.awt.Font;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.List;
@@ -40,6 +39,7 @@ import com.l2skale.multisell.model.Item;
 import com.l2skale.multisell.model.multisell.MultisellItem;
 import com.l2skale.multisell.ui.dnd.AddItemTransferHandler;
 import com.l2skale.multisell.ui.renders.MultisellItemRenderer;
+import com.l2skale.multisell.ui.utils.Fonts;
 import com.l2skale.multisell.ui.utils.HintList;
 import com.l2skale.multisell.ui.utils.ListContextMenu;
 
@@ -67,7 +67,7 @@ public class EntrySidePanel extends JPanel
 		setLayout(new BorderLayout());
 
 		JLabel label = new JLabel(title);
-		label.setFont(new Font("Arial", Font.BOLD, 14));
+		label.setFont(Fonts.SECTION_TITLE);
 		add(label, BorderLayout.NORTH);
 
 		_view.setCellRenderer(_renderer);

@@ -67,7 +67,7 @@ public class MultisellLoader
 			{
 				continue;
 			}
-			multisell.setListAttribute(name, attr.getNodeValue());
+			multisell.getListAttributes().set(name, attr.getNodeValue());
 		}
 
 		// Allowed NPCs (<npcs><npc>id</npc>...</npcs>).
@@ -131,7 +131,7 @@ public class MultisellLoader
 			final String name = attr.getNodeName();
 			if (!name.equals("id") && !name.equals("count"))
 			{
-				item.setExtra(name, attr.getNodeValue());
+				item.getExtras().set(name, attr.getNodeValue());
 			}
 		}
 

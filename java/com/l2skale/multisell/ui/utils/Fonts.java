@@ -21,39 +21,19 @@
  */
 package com.l2skale.multisell.ui.utils;
 
-import java.awt.Component;
-
-import javax.swing.ImageIcon;
-import javax.swing.JLabel;
-import javax.swing.JOptionPane;
+import java.awt.Font;
 
 /*
+ * Shared fonts, so a look is defined once instead of being retyped at each use.
+ *
  * @author Skache
  */
-public class MessageUtils
+public final class Fonts
 {
-	// Show an information message.
-	public static void showInfoMessage(Component parent, String message, String title)
-	{
-		JOptionPane.showMessageDialog(parent, message, title, JOptionPane.INFORMATION_MESSAGE);
-	}
+	// The bold heading above each panel's list (Entries, Products, Ingredients, Available Items).
+	public static final Font SECTION_TITLE = new Font("Arial", Font.BOLD, 14);
 
-	// Show an information message with an icon.
-	public static void showInfoMessage(Component parent, JLabel label, String title, ImageIcon icon)
+	private Fonts()
 	{
-		JOptionPane.showMessageDialog(parent, label, title, JOptionPane.INFORMATION_MESSAGE, icon);
-	}
-
-	// Show an error message.
-	public static void showErrorMessage(Component parent, String message, String title)
-	{
-		Sound.playSound("sys_denial.wav");
-		JOptionPane.showMessageDialog(parent, message, title, JOptionPane.ERROR_MESSAGE);
-	}
-
-	// Show a warning message.
-	public static void showWarningMessage(Component parent, String message, String title)
-	{
-		JOptionPane.showMessageDialog(parent, message, title, JOptionPane.WARNING_MESSAGE);
 	}
 }

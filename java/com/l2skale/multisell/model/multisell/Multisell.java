@@ -22,10 +22,8 @@
 package com.l2skale.multisell.model.multisell;
 
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 /*
@@ -46,9 +44,9 @@ public class Multisell
 	// name has not been set yet.
 	private String _id;
 
-	// <list> attribute values, keyed by name, in the order they were added/loaded. Values are the
-	// raw XML text (e.g. "true", "1.5"); booleans are stored only when true, matching the datapack.
-	private final Map<String, String> _listAttributes = new LinkedHashMap<>();
+	// <list> options (applyTaxes, useRate, isChanceMultisell, multipliers, ...) kept by name, exactly
+	// as the server reads them into a StatSet, so every attribute the xsd allows has a home.
+	private final AttributeMap _listAttributes = new AttributeMap();
 
 	private final Set<Integer> _npcIds = new LinkedHashSet<>();
 	private final List<Entry> _entries = new ArrayList<>();
@@ -68,48 +66,10 @@ public class Multisell
 		_id = (id == null) ? "" : id;
 	}
 
-	// All <list> attributes in order, for the saver to write back verbatim.
-	public Map<String, String> getListAttributes()
+	// The <list> options, to read/write by name (see AttributeMap).
+	public AttributeMap getListAttributes()
 	{
 		return _listAttributes;
-	}
-
-	// The raw value of a <list> attribute, or null when it is not set.
-	public String getListAttribute(String name)
-	{
-		return _listAttributes.get(name);
-	}
-
-	// Set (or, with a null/empty value, clear) a <list> attribute.
-	public void setListAttribute(String name, String value)
-	{
-		if ((value == null) || value.isEmpty())
-		{
-			_listAttributes.remove(name);
-		}
-		else
-		{
-			_listAttributes.put(name, value);
-		}
-	}
-
-	// A <list> boolean flag (applyTaxes, isChanceMultisell, ...): true only when present and "true".
-	public boolean getListBoolean(String name)
-	{
-		return Boolean.parseBoolean(_listAttributes.get(name));
-	}
-
-	// Store a boolean flag: written as "true" when on, removed when off (datapacks omit false flags).
-	public void setListBoolean(String name, boolean value)
-	{
-		if (value)
-		{
-			_listAttributes.put(name, "true");
-		}
-		else
-		{
-			_listAttributes.remove(name);
-		}
 	}
 
 	public Set<Integer> getNpcIds()

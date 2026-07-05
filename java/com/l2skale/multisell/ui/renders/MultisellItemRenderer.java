@@ -79,18 +79,18 @@ public class MultisellItemRenderer extends JPanel implements ListCellRenderer<Mu
 
 		// "+N" enchant prefix, then the name and count.
 		final String name = item != null ? item.getName() : ("id " + value.getItemId());
-		final int enchant = value.getIntExtra("enchantmentLevel");
+		final int enchant = value.getExtras().getInt("enchantmentLevel");
 		final String prefix = enchant > 0 ? "+" + enchant + " " : "";
 		final JLabel label = new JLabel(prefix + name + Numbers.countSuffix(value.getCount()));
 		label.setForeground(fg);
 		add(label);
 
 		// Per-line markers so the row is not a mystery: a product's chance, a kept ingredient.
-		if (value.hasExtra("chance"))
+		if (value.getExtras().has("chance"))
 		{
-			add(marker(formatChance(value.getExtra("chance")), CHANCE_COLOR));
+			add(marker(formatChance(value.getExtras().get("chance")), CHANCE_COLOR));
 		}
-		if (value.getBooleanExtra("maintainIngredient"))
+		if (value.getExtras().getBoolean("maintainIngredient"))
 		{
 			add(marker("keep", KEEP_COLOR));
 		}

@@ -50,7 +50,7 @@ public class MultisellSaver
 		// Root <list> with its options first, then the schema location. Every attribute the pack
 		// allowed is written back in the order it was loaded/set, so nothing is dropped or reordered.
 		sb.append("<list");
-		for (Map.Entry<String, String> option : multisell.getListAttributes().entrySet())
+		for (Map.Entry<String, String> option : multisell.getListAttributes().entries())
 		{
 			sb.append(" ").append(option.getKey()).append("=\"").append(option.getValue()).append("\"");
 		}
@@ -141,7 +141,7 @@ public class MultisellSaver
 		sb.append("\t\t<").append(tag);
 		sb.append(" id=\"").append(item.getItemId()).append("\"");
 		sb.append(" count=\"").append(item.getCount()).append("\"");
-		for (Map.Entry<String, String> extra : item.getExtras().entrySet())
+		for (Map.Entry<String, String> extra : item.getExtras().entries())
 		{
 			sb.append(" ").append(extra.getKey()).append("=\"").append(extra.getValue()).append("\"");
 		}

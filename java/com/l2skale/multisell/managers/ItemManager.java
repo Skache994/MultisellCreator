@@ -49,15 +49,15 @@ public class ItemManager
 	{
 		try
 		{
-			final long start = System.currentTimeMillis();
+			// final long start = System.currentTimeMillis();
 			List<Item> loadedItems = _itemLoader.load();
 			items.clear();
 			for (Item item : loadedItems)
 			{
 				items.put(item.getId(), item);
 			}
-			final long ms = System.currentTimeMillis() - start;
-			System.out.println("[ItemManager] Parsed " + loadedItems.size() + " <item> elements -> " + items.size() + " unique item ids in " + ms + " ms.");
+			// final long ms = System.currentTimeMillis() - start;
+			// System.out.println("[ItemManager] Parsed " + loadedItems.size() + " <item> elements -> " + items.size() + " unique item ids in " + ms + " ms.");
 		}
 		catch (Exception e)
 		{

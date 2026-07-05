@@ -21,39 +21,45 @@
  */
 package com.l2skale.multisell.ui.utils;
 
-import java.awt.Component;
+import java.util.function.Consumer;
 
-import javax.swing.ImageIcon;
-import javax.swing.JLabel;
-import javax.swing.JOptionPane;
+import javax.swing.JTextField;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 
 /*
+ * Small helpers for text fields, so the DocumentListener boilerplate is written once.
+ *
  * @author Skache
  */
-public class MessageUtils
+public final class TextFields
 {
-	// Show an information message.
-	public static void showInfoMessage(Component parent, String message, String title)
+	private TextFields()
 	{
-		JOptionPane.showMessageDialog(parent, message, title, JOptionPane.INFORMATION_MESSAGE);
 	}
 
-	// Show an information message with an icon.
-	public static void showInfoMessage(Component parent, JLabel label, String title, ImageIcon icon)
+	// Run onChange with the field's current text on every edit (typed, pasted or cleared).
+	public static void onChange(JTextField field, Consumer<String> onChange)
 	{
-		JOptionPane.showMessageDialog(parent, label, title, JOptionPane.INFORMATION_MESSAGE, icon);
-	}
+		field.getDocument().addDocumentListener(new DocumentListener()
+		{
+			@Override
+			public void insertUpdate(DocumentEvent e)
+			{
+				onChange.accept(field.getText());
+			}
 
-	// Show an error message.
-	public static void showErrorMessage(Component parent, String message, String title)
-	{
-		Sound.playSound("sys_denial.wav");
-		JOptionPane.showMessageDialog(parent, message, title, JOptionPane.ERROR_MESSAGE);
-	}
+			@Override
+			public void removeUpdate(DocumentEvent e)
+			{
+				onChange.accept(field.getText());
+			}
 
-	// Show a warning message.
-	public static void showWarningMessage(Component parent, String message, String title)
-	{
-		JOptionPane.showMessageDialog(parent, message, title, JOptionPane.WARNING_MESSAGE);
+			@Override
+			public void changedUpdate(DocumentEvent e)
+			{
+				onChange.accept(field.getText());
+			}
+		});
 	}
 }

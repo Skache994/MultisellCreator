@@ -49,12 +49,12 @@ public class NpcManager
 	{
 		try
 		{
-			final long start = System.currentTimeMillis();
+			// final long start = System.currentTimeMillis();
 			Map<Integer, NpcInfo> loaded = _npcNameLoader.load();
 			npcs.clear();
 			npcs.putAll(loaded);
-			final long ms = System.currentTimeMillis() - start;
-			System.out.println("[NpcManager] Loaded " + npcs.size() + " named npc ids in " + ms + " ms.");
+			// final long ms = System.currentTimeMillis() - start;
+			// System.out.println("[NpcManager] Loaded " + npcs.size() + " named npc ids in " + ms + " ms.");
 		}
 		catch (Exception e)
 		{

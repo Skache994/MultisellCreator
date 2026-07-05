@@ -23,7 +23,6 @@ package com.l2skale.multisell.ui.panels;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
-import java.awt.Font;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.IntFunction;
@@ -39,6 +38,7 @@ import com.l2skale.multisell.model.multisell.Entry;
 import com.l2skale.multisell.model.multisell.Multisell;
 import com.l2skale.multisell.ui.dnd.ListExportTransferHandler;
 import com.l2skale.multisell.ui.renders.EntryRowRenderer;
+import com.l2skale.multisell.ui.utils.Fonts;
 import com.l2skale.multisell.ui.utils.HintList;
 import com.l2skale.multisell.ui.utils.ListContextMenu;
 
@@ -67,7 +67,7 @@ public class EntriesPanel extends JPanel
 	{
 		setLayout(new BorderLayout());
 
-		_title.setFont(new Font("Arial", Font.BOLD, 14));
+		_title.setFont(Fonts.SECTION_TITLE);
 		add(_title, BorderLayout.NORTH);
 
 		_view.setCellRenderer(_renderer);

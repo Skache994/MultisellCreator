@@ -319,22 +319,22 @@ public class Gui
 		final File xsd = datapack.getMultisellXsd();
 		if (!xsd.isFile())
 		{
-			System.out.println("[multisell.xsd] not found at " + xsd + " - editor will use its built-in defaults.");
+			// System.out.println("[multisell.xsd] not found at " + xsd + " - editor will use its built-in defaults.");
 			return null;
 		}
 
 		try
 		{
 			final MultisellSchema schema = MultisellSchemaLoader.load(xsd);
-			System.out.println("[multisell.xsd] " + xsd);
-			System.out.println("[multisell.xsd]   list:       " + schema.getListAttributes());
-			System.out.println("[multisell.xsd]   ingredient: " + schema.getIngredientAttributes());
-			System.out.println("[multisell.xsd]   production: " + schema.getProductionAttributes());
+			// System.out.println("[multisell.xsd] " + xsd);
+			// System.out.println("[multisell.xsd]   list:       " + schema.getListAttributes());
+			// System.out.println("[multisell.xsd]   ingredient: " + schema.getIngredientAttributes());
+			// System.out.println("[multisell.xsd]   production: " + schema.getProductionAttributes());
 			return schema;
 		}
 		catch (Exception e)
 		{
-			System.out.println("[multisell.xsd] could not read " + xsd + ": " + e.getMessage());
+			// System.out.println("[multisell.xsd] could not read " + xsd + ": " + e.getMessage());
 			return null;
 		}
 	}
