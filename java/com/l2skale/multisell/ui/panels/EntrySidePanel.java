@@ -58,7 +58,7 @@ public class EntrySidePanel extends JPanel
 	private final MultisellItemRenderer _renderer = new MultisellItemRenderer();
 
 	private Consumer<MultisellItem> _onRemove;
-	private Consumer<MultisellItem> _onEditAmount;
+	private Consumer<MultisellItem> _onEdit;
 	private Consumer<MultisellItem> _onMoveUp;
 	private Consumer<MultisellItem> _onMoveDown;
 
@@ -83,10 +83,10 @@ public class EntrySidePanel extends JPanel
 		_onRemove = onRemove;
 	}
 
-	// Called when the user double-clicks an item (to change its amount).
-	public void setOnEditAmount(Consumer<MultisellItem> onEditAmount)
+	// Called when the user opens the line editor for an item (double-click or right-click Edit).
+	public void setOnEdit(Consumer<MultisellItem> onEdit)
 	{
-		_onEditAmount = onEditAmount;
+		_onEdit = onEdit;
 	}
 
 	public void setOnMoveUp(Consumer<MultisellItem> onMoveUp)
@@ -140,7 +140,7 @@ public class EntrySidePanel extends JPanel
 
 	private void installContextMenu()
 	{
-		// Double-click an item to edit its amount.
+		// Double-click an item to open its line editor.
 		_view.addMouseListener(new MouseAdapter()
 		{
 			@Override
@@ -156,17 +156,19 @@ public class EntrySidePanel extends JPanel
 				{
 					_view.setSelectedIndex(index);
 					final MultisellItem selected = _view.getSelectedValue();
-					if ((selected != null) && (_onEditAmount != null))
+					if (selected != null)
 					{
-						_onEditAmount.accept(selected);
+						fire(_onEdit, selected);
 					}
 				}
 			}
 		});
 
-		// Right-click menu.
+		// Right-click menu. Edit opens the same line editor as a double-click.
 		ListContextMenu.install(_view, (menu, item, index) ->
 		{
+			menu.item("Edit", () -> fire(_onEdit, item));
+			menu.separator();
 			menu.item("Move Up", () -> fire(_onMoveUp, item)).enabled(index > 0);
 			menu.item("Move Down", () -> fire(_onMoveDown, item)).enabled(index < (_model.getSize() - 1));
 			menu.separator();

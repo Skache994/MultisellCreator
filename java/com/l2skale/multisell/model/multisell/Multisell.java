@@ -22,22 +22,30 @@
 package com.l2skale.multisell.model.multisell;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /*
- * A whole multisell list: its id (the file name number), its options, the NPCs
- * allowed to open it, and its entries. Mirrors the server's ListContainer.
+ * A whole multisell list: its id (the file name number), its <list> options, the
+ * NPCs allowed to open it, and its entries. Mirrors the server's ListContainer.
+ *
+ * The <list> options (applyTaxes, useRate, isChanceMultisell, the multipliers, ...)
+ * are kept generically by name, exactly as the server itself reads them into a
+ * StatSet. This way every attribute the pack's xsd allows has a home, and loading
+ * then saving never drops one we do not have a hardcoded field for.
  *
  * @author Skache
  */
 public class Multisell
 {
 	private int _id;
-	private boolean _applyTaxes;
-	private boolean _maintainEnchantment;
-	private String _useRate; // Kept as text: either a number or a config field name.
+
+	// <list> attribute values, keyed by name, in the order they were added/loaded. Values are the
+	// raw XML text (e.g. "true", "1.5"); booleans are stored only when true, matching the datapack.
+	private final Map<String, String> _listAttributes = new LinkedHashMap<>();
 
 	private final Set<Integer> _npcIds = new LinkedHashSet<>();
 	private final List<Entry> _entries = new ArrayList<>();
@@ -57,34 +65,48 @@ public class Multisell
 		_id = id;
 	}
 
-	public boolean isApplyTaxes()
+	// All <list> attributes in order, for the saver to write back verbatim.
+	public Map<String, String> getListAttributes()
 	{
-		return _applyTaxes;
+		return _listAttributes;
 	}
 
-	public void setApplyTaxes(boolean applyTaxes)
+	// The raw value of a <list> attribute, or null when it is not set.
+	public String getListAttribute(String name)
 	{
-		_applyTaxes = applyTaxes;
+		return _listAttributes.get(name);
 	}
 
-	public boolean isMaintainEnchantment()
+	// Set (or, with a null/empty value, clear) a <list> attribute.
+	public void setListAttribute(String name, String value)
 	{
-		return _maintainEnchantment;
+		if ((value == null) || value.isEmpty())
+		{
+			_listAttributes.remove(name);
+		}
+		else
+		{
+			_listAttributes.put(name, value);
+		}
 	}
 
-	public void setMaintainEnchantment(boolean maintainEnchantment)
+	// A <list> boolean flag (applyTaxes, isChanceMultisell, ...): true only when present and "true".
+	public boolean getListBoolean(String name)
 	{
-		_maintainEnchantment = maintainEnchantment;
+		return Boolean.parseBoolean(_listAttributes.get(name));
 	}
 
-	public String getUseRate()
+	// Store a boolean flag: written as "true" when on, removed when off (datapacks omit false flags).
+	public void setListBoolean(String name, boolean value)
 	{
-		return _useRate;
-	}
-
-	public void setUseRate(String useRate)
-	{
-		_useRate = useRate;
+		if (value)
+		{
+			_listAttributes.put(name, "true");
+		}
+		else
+		{
+			_listAttributes.remove(name);
+		}
 	}
 
 	public Set<Integer> getNpcIds()

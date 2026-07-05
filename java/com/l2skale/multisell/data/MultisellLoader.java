@@ -28,6 +28,7 @@ import javax.xml.parsers.DocumentBuilderFactory;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
@@ -53,13 +54,20 @@ public class MultisellLoader
 		final Document doc = builder.parse(file);
 		doc.getDocumentElement().normalize();
 
-		// Root <list> element and its options.
+		// Root <list> element and its options. Read every attribute the pack put here (applyTaxes,
+		// useRate, isChanceMultisell, the multipliers, or anything else) so nothing is dropped on save.
+		// The xmlns/schema-location attributes are structural, not data, so they are skipped.
 		final Element list = doc.getDocumentElement();
-		multisell.setApplyTaxes(boolAttr(list, "applyTaxes"));
-		multisell.setMaintainEnchantment(boolAttr(list, "maintainEnchantment"));
-		if (list.hasAttribute("useRate"))
+		final NamedNodeMap listAttrs = list.getAttributes();
+		for (int i = 0; i < listAttrs.getLength(); i++)
 		{
-			multisell.setUseRate(list.getAttribute("useRate"));
+			final Node attr = listAttrs.item(i);
+			final String name = attr.getNodeName();
+			if (name.startsWith("xmlns") || name.startsWith("xsi:"))
+			{
+				continue;
+			}
+			multisell.setListAttribute(name, attr.getNodeValue());
 		}
 
 		// Allowed NPCs (<npcs><npc>id</npc>...</npcs>).
@@ -107,20 +115,24 @@ public class MultisellLoader
 		return entry;
 	}
 
-	// Turn one <ingredient> or <production> element into a MultisellItem.
+	// Turn one <ingredient> or <production> element into a MultisellItem. id and count are the
+	// required core; every other attribute (enchantmentLevel, maintainIngredient, chance, ...) is
+	// kept verbatim so nothing is dropped on save.
 	private static MultisellItem parseItem(Element element)
 	{
 		final int itemId = Integer.parseInt(element.getAttribute("id"));
 		final int count = Integer.parseInt(element.getAttribute("count"));
 		final MultisellItem item = new MultisellItem(itemId, count);
 
-		if (element.hasAttribute("enchantmentLevel"))
+		final NamedNodeMap attrs = element.getAttributes();
+		for (int i = 0; i < attrs.getLength(); i++)
 		{
-			item.setEnchantmentLevel(Integer.parseInt(element.getAttribute("enchantmentLevel")));
-		}
-		if (element.hasAttribute("maintainIngredient"))
-		{
-			item.setMaintainIngredient(Boolean.parseBoolean(element.getAttribute("maintainIngredient")));
+			final Node attr = attrs.item(i);
+			final String name = attr.getNodeName();
+			if (!name.equals("id") && !name.equals("count"))
+			{
+				item.setExtra(name, attr.getNodeValue());
+			}
 		}
 
 		return item;
@@ -138,11 +150,5 @@ public class MultisellLoader
 		{
 			return 0; // Not a numeric name; caller can set a proper id before saving.
 		}
-	}
-
-	// Reads an attribute as a boolean, defaulting to false when absent.
-	private static boolean boolAttr(Element element, String name)
-	{
-		return element.hasAttribute(name) && Boolean.parseBoolean(element.getAttribute(name));
 	}
 }

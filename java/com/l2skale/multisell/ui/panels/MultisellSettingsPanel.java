@@ -21,14 +21,18 @@
  */
 package com.l2skale.multisell.ui.panels;
 
+import java.awt.Component;
 import java.awt.FlowLayout;
 import java.awt.Window;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.function.IntFunction;
 import java.util.function.IntPredicate;
 
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
+import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
@@ -36,14 +40,21 @@ import javax.swing.SwingUtilities;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
+import com.l2skale.multisell.model.multisell.AttributeType;
 import com.l2skale.multisell.model.multisell.Multisell;
+import com.l2skale.multisell.model.multisell.MultisellSchema;
+import com.l2skale.multisell.model.multisell.SchemaAttribute;
 import com.l2skale.multisell.ui.dialogs.NpcEditorDialog;
 import com.l2skale.multisell.ui.utils.ButtonFactory;
+import com.l2skale.multisell.ui.utils.WrapLayout;
 
 /*
- * The settings bar: shows the current multisell and edits its list-level options
- * (allowed npcs, applyTaxes, maintainEnchantment, useRate). Changes are written
- * straight into the bound Multisell.
+ * The settings bar: shows the current multisell and edits its list-level options.
+ * Those options are not hardcoded - they are built from the loaded pack's own
+ * multisell.xsd (a checkbox for each boolean flag, a small field for each number/
+ * token), so an Interlude pack shows useRate while a modern pack shows the
+ * multipliers and isChanceMultisell. Changes are written straight into the bound
+ * Multisell by attribute name.
  *
  * @author Skache
  */
@@ -51,14 +62,19 @@ public class MultisellSettingsPanel extends JPanel
 {
 	private static final long serialVersionUID = 1L;
 
+	// Fallback when a pack ships no xsd: the two flags every chronicle shares.
+	private static final List<SchemaAttribute> DEFAULT_OPTIONS = List.of(new SchemaAttribute("applyTaxes", AttributeType.BOOLEAN, false), new SchemaAttribute("maintainEnchantment", AttributeType.BOOLEAN, false));
+
 	private final JLabel _title = new JLabel("No multisell");
 	private final JLabel _npcsLabel = new JLabel("any");
 	private final JButton _npcsButton = ButtonFactory.createButton("Edit NPCs...", _ -> editNpcs());
-	private final JCheckBox _applyTaxes = ButtonFactory.createCheckBox("applyTaxes");
-	private final JCheckBox _maintainEnchantment = ButtonFactory.createCheckBox("maintainEnchantment");
-	private final JTextField _useRate = new JTextField(6);
+
+	// The option controls currently on the bar (checkboxes/fields built from the schema). Tracked
+	// so a rebuild removes exactly these and leaves the fixed title/NPCs controls in place.
+	private final List<Component> _optionControls = new ArrayList<>();
 
 	private Multisell _multisell;
+	private MultisellSchema _schema; // The loaded pack's rules; null falls back to DEFAULT_OPTIONS.
 
 	// Resolves an npc id to its name for the editor (set once the datapack npcs are loaded; may be null).
 	private IntFunction<String> _npcNameLookup;
@@ -68,7 +84,9 @@ public class MultisellSettingsPanel extends JPanel
 
 	public MultisellSettingsPanel()
 	{
-		setLayout(new FlowLayout(FlowLayout.LEFT, 10, 4));
+		// WrapLayout (not plain FlowLayout) so the bar grows to a second row instead of clipping
+		// its options when a modern pack's controls are wider than the window.
+		setLayout(new WrapLayout(FlowLayout.LEFT, 10, 4));
 
 		add(_title);
 		add(new JLabel("|"));
@@ -76,57 +94,15 @@ public class MultisellSettingsPanel extends JPanel
 		add(_npcsLabel);
 		add(_npcsButton);
 		add(new JLabel("|"));
-		add(_applyTaxes);
-		add(_maintainEnchantment);
-		add(new JLabel("|"));
-		add(new JLabel("useRate:"));
-		add(_useRate);
-
-		_applyTaxes.addActionListener(_ ->
-		{
-			if (_multisell != null)
-			{
-				_multisell.setApplyTaxes(_applyTaxes.isSelected());
-			}
-		});
-		_maintainEnchantment.addActionListener(_ ->
-		{
-			if (_multisell != null)
-			{
-				_multisell.setMaintainEnchantment(_maintainEnchantment.isSelected());
-			}
-		});
-		_useRate.getDocument().addDocumentListener(new DocumentListener()
-		{
-			@Override
-			public void insertUpdate(DocumentEvent e)
-			{
-				update();
-			}
-
-			@Override
-			public void removeUpdate(DocumentEvent e)
-			{
-				update();
-			}
-
-			@Override
-			public void changedUpdate(DocumentEvent e)
-			{
-				update();
-			}
-
-			private void update()
-			{
-				if (_multisell != null)
-				{
-					final String text = _useRate.getText().trim();
-					_multisell.setUseRate(text.isEmpty() ? null : text);
-				}
-			}
-		});
 
 		setControlsEnabled(false);
+	}
+
+	// Provide the pack's multisell rules (call after the datapack loads its xsd). The option
+	// controls rebuild from this the next time a multisell is bound.
+	public void setSchema(MultisellSchema schema)
+	{
+		_schema = schema;
 	}
 
 	// Provide the npc lookups used to label ids in the editor (call after npcs load).
@@ -140,6 +116,8 @@ public class MultisellSettingsPanel extends JPanel
 	public void setMultisell(Multisell multisell)
 	{
 		_multisell = multisell;
+		rebuildOptions();
+
 		if (multisell == null)
 		{
 			_title.setText("No multisell");
@@ -148,11 +126,61 @@ public class MultisellSettingsPanel extends JPanel
 		}
 
 		_title.setText("Multisell " + (multisell.getId() > 0 ? String.valueOf(multisell.getId()) : "(new)"));
-		_applyTaxes.setSelected(multisell.isApplyTaxes());
-		_maintainEnchantment.setSelected(multisell.isMaintainEnchantment());
-		_useRate.setText(multisell.getUseRate() == null ? "" : multisell.getUseRate());
 		updateNpcsLabel();
 		setControlsEnabled(true);
+	}
+
+	// Rebuild the option controls (checkbox per flag, field per number/token) from the schema,
+	// each bound to read/write its attribute on the current multisell by name.
+	private void rebuildOptions()
+	{
+		for (Component control : _optionControls)
+		{
+			remove(control);
+		}
+		_optionControls.clear();
+
+		if (_multisell != null)
+		{
+			for (SchemaAttribute attribute : optionAttributes())
+			{
+				final JComponent control = createControl(attribute);
+				add(control);
+				_optionControls.add(control);
+			}
+		}
+
+		revalidate();
+		repaint();
+	}
+
+	// The list-level attributes to offer: the pack's own if we have an xsd, else the shared defaults.
+	private List<SchemaAttribute> optionAttributes()
+	{
+		return (_schema != null) ? _schema.getListAttributes() : DEFAULT_OPTIONS;
+	}
+
+	private JComponent createControl(SchemaAttribute attribute)
+	{
+		final String name = attribute.getName();
+		if (attribute.getType() == AttributeType.BOOLEAN)
+		{
+			final JCheckBox box = ButtonFactory.createCheckBox(name);
+			box.setSelected(_multisell.getListBoolean(name));
+			box.addActionListener(_ -> _multisell.setListBoolean(name, box.isSelected()));
+			return box;
+		}
+
+		// Numbers/tokens (useRate, ingredientMultiplier, ...): a small labeled field.
+		final JPanel holder = new JPanel(new FlowLayout(FlowLayout.LEFT, 4, 0));
+		holder.setOpaque(false);
+		holder.add(new JLabel(name + ":"));
+
+		final JTextField field = new JTextField(6);
+		field.setText(nullToEmpty(_multisell.getListAttribute(name)));
+		onTextChange(field, text -> _multisell.setListAttribute(name, text.trim()));
+		holder.add(field);
+		return holder;
 	}
 
 	private void editNpcs()
@@ -184,8 +212,35 @@ public class MultisellSettingsPanel extends JPanel
 	private void setControlsEnabled(boolean enabled)
 	{
 		_npcsButton.setEnabled(enabled);
-		_applyTaxes.setEnabled(enabled);
-		_maintainEnchantment.setEnabled(enabled);
-		_useRate.setEnabled(enabled);
+	}
+
+	private static String nullToEmpty(String value)
+	{
+		return value == null ? "" : value;
+	}
+
+	// Call onChange with the field's current text whenever it changes (typed, pasted, or cleared).
+	private static void onTextChange(JTextField field, Consumer<String> onChange)
+	{
+		field.getDocument().addDocumentListener(new DocumentListener()
+		{
+			@Override
+			public void insertUpdate(DocumentEvent e)
+			{
+				onChange.accept(field.getText());
+			}
+
+			@Override
+			public void removeUpdate(DocumentEvent e)
+			{
+				onChange.accept(field.getText());
+			}
+
+			@Override
+			public void changedUpdate(DocumentEvent e)
+			{
+				onChange.accept(field.getText());
+			}
+		});
 	}
 }

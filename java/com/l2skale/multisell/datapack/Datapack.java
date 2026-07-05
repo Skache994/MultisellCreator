@@ -35,6 +35,7 @@ public class Datapack
 	private static final String ITEMS_PATH = "stats/items";
 	private static final String NPCS_PATH = "stats/npcs";
 	private static final String MULTISELL_PATH = "multisell";
+	private static final String MULTISELL_XSD_PATH = "xsd/multisell.xsd";
 
 	private final File _root;
 	private final File _dataDir;
@@ -66,6 +67,13 @@ public class Datapack
 	public File getMultisellDir()
 	{
 		return new File(_dataDir, MULTISELL_PATH);
+	}
+
+	// <data>/xsd/multisell.xsd - THIS server's multisell rulebook (which attributes are legal).
+	// May not exist on every pack; callers should check exists() before parsing.
+	public File getMultisellXsd()
+	{
+		return new File(_dataDir, MULTISELL_XSD_PATH);
 	}
 
 	// A folder counts as a datapack only if it actually holds the item definitions.

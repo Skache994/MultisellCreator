@@ -28,11 +28,13 @@ import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.io.File;
 import java.util.List;
+import java.util.Set;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JFileChooser;
+import javax.swing.JLabel;
 import javax.swing.JMenuBar;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -46,6 +48,7 @@ import com.l2skale.multisell.MultisellCreator;
 import com.l2skale.multisell.client.TextureProvider;
 import com.l2skale.multisell.data.MultisellLoader;
 import com.l2skale.multisell.data.MultisellSaver;
+import com.l2skale.multisell.data.MultisellSchemaLoader;
 import com.l2skale.multisell.datapack.Datapack;
 import com.l2skale.multisell.managers.ItemManager;
 import com.l2skale.multisell.managers.NpcManager;
@@ -56,6 +59,9 @@ import com.l2skale.multisell.model.Item;
 import com.l2skale.multisell.model.multisell.Entry;
 import com.l2skale.multisell.model.multisell.Multisell;
 import com.l2skale.multisell.model.multisell.MultisellItem;
+import com.l2skale.multisell.model.multisell.MultisellSchema;
+import com.l2skale.multisell.model.multisell.SchemaAttribute;
+import com.l2skale.multisell.ui.dialogs.LineEditorDialog;
 import com.l2skale.multisell.ui.panels.AvailableItemPanel;
 import com.l2skale.multisell.ui.panels.MultisellSettingsPanel;
 import com.l2skale.multisell.ui.panels.TrashBinPanel;
@@ -77,12 +83,14 @@ public class Gui
 	private Datapack _datapack;
 	private ItemManager _itemManager;
 	private NpcManager _npcManager;
+	private MultisellSchema _multisellSchema; // The loaded pack's own multisell rules (from its xsd); null if the pack has no xsd or it could not be read.
 	private RightPanel _rightPanel;
 	private JSplitPane _splitPane;
 	private Multisell _multisell;
 	private Entry _selectedEntry;
 	private File _multisellDir; // Folder the current multisell was opened from; save writes back here so a file from custom/ stays in custom/. Null for a new multisell.
 	private AttentionPulse _loadItemsPulse; // Gently glows the Load Items button until items are loaded.
+	private JLabel _packLabel; // Shows which datapack is currently loaded (e.g. its folder name).
 
 	public Gui(MultisellCreator frame)
 	{
@@ -149,8 +157,8 @@ public class Gui
 		_rightPanel.getProductsPanel().setOnRemove(this::delete);
 		_rightPanel.getIngredientsPanel().enableItemDrop(item -> addItemToSelected(true, item), (from, to) -> reorderItem(true, from, to));
 		_rightPanel.getProductsPanel().enableItemDrop(item -> addItemToSelected(false, item), (from, to) -> reorderItem(false, from, to));
-		_rightPanel.getIngredientsPanel().setOnEditAmount(this::editAmount);
-		_rightPanel.getProductsPanel().setOnEditAmount(this::editAmount);
+		_rightPanel.getIngredientsPanel().setOnEdit(item -> editLine(item, true));
+		_rightPanel.getProductsPanel().setOnEdit(item -> editLine(item, false));
 		_rightPanel.getIngredientsPanel().setOnMoveUp(item -> moveItem(true, item, -1));
 		_rightPanel.getIngredientsPanel().setOnMoveDown(item -> moveItem(true, item, 1));
 		_rightPanel.getProductsPanel().setOnMoveUp(item -> moveItem(false, item, -1));
@@ -200,6 +208,12 @@ public class Gui
 		toolbar.add(ButtonFactory.createButton("Open", _ -> openMultisell()));
 		toolbar.add(ButtonFactory.createButton("Save", _ -> saveMultisell()));
 		toolbar.add(ButtonFactory.createDangerButton("Delete", _ -> deleteMultisell()));
+
+		// Shows the loaded datapack so it is always clear which pack (Interlude, OrcVillage, ...) is active.
+		toolbar.add(toolbarSeparator());
+		_packLabel = new JLabel("No pack loaded");
+		toolbar.add(_packLabel);
+
 		return toolbar;
 	}
 
@@ -245,6 +259,10 @@ public class Gui
 				_npcManager = new NpcManager(datapack.getNpcsDir().getPath());
 				_npcManager.loadNpcNames();
 
+				// This pack's own multisell rules, read from its data/xsd/multisell.xsd. It defines
+				// which attributes are legal on this server; the UI/output will be driven from it.
+				_multisellSchema = loadMultisellSchema(datapack);
+
 				return _itemManager.getAllItems().size();
 			}
 
@@ -256,6 +274,13 @@ public class Gui
 					_availableItemsList.clear();
 					_availableItemsList.addItems(_itemManager.getAllItems().values());
 					_settingsPanel.setNpcLookups(_npcManager::getNpcName, _npcManager::isCustomNpc); // names + custom flags for the editor
+					_settingsPanel.setSchema(_multisellSchema); // list-option controls now come from this pack's xsd
+
+					// A multisell belongs to the pack it came from (its items, npcs and xsd), so switching
+					// packs discards the open one - otherwise an Interlude list would linger on an OrcVillage pack.
+					clearMultisell();
+					_packLabel.setText("Pack: " + packDisplayName(datapack.getRoot()));
+
 					_loadItemsPulse.stop(); // items are in - the hint has done its job
 					Sound.playSound("inventory_open_01.wav");
 					MessageUtils.showInfoMessage(_frame, "Loaded " + get() + " items from:\n" + datapack, "Datapack loaded");
@@ -270,6 +295,48 @@ public class Gui
 				}
 			}
 		}.execute();
+	}
+
+	// A meaningful name for the loaded pack. The user usually picks the "game" folder (or its
+	// "data"), whose name says nothing, so we walk up past those generic wrappers to the project
+	// folder - e.g. .../L2J_Mobius_CT_0_Interlude/dist/game -> "L2J_Mobius_CT_0_Interlude".
+	private static String packDisplayName(File root)
+	{
+		final Set<String> generic = Set.of("game", "data", "dist");
+		File dir = root;
+		while ((dir != null) && generic.contains(dir.getName().toLowerCase()))
+		{
+			dir = dir.getParentFile();
+		}
+		return (dir != null) && !dir.getName().isEmpty() ? dir.getName() : root.getName();
+	}
+
+	// Read the pack's data/xsd/multisell.xsd into a schema of allowed attributes. A missing or
+	// unreadable xsd is not fatal - we just return null and carry on (the editor keeps working),
+	// because the xsd only drives what the UI offers, not whether the app runs.
+	private static MultisellSchema loadMultisellSchema(Datapack datapack)
+	{
+		final File xsd = datapack.getMultisellXsd();
+		if (!xsd.isFile())
+		{
+			System.out.println("[multisell.xsd] not found at " + xsd + " - editor will use its built-in defaults.");
+			return null;
+		}
+
+		try
+		{
+			final MultisellSchema schema = MultisellSchemaLoader.load(xsd);
+			System.out.println("[multisell.xsd] " + xsd);
+			System.out.println("[multisell.xsd]   list:       " + schema.getListAttributes());
+			System.out.println("[multisell.xsd]   ingredient: " + schema.getIngredientAttributes());
+			System.out.println("[multisell.xsd]   production: " + schema.getProductionAttributes());
+			return schema;
+		}
+		catch (Exception e)
+		{
+			System.out.println("[multisell.xsd] could not read " + xsd + ": " + e.getMessage());
+			return null;
+		}
 	}
 
 	// Prompt for the Lineage 2 game folder and load icons from it. The user only picks the game
@@ -633,21 +700,29 @@ public class Gui
 		}
 	}
 
-	// Change the amount of an item in the selected entry (double-click? Why not :D)
-	private void editAmount(MultisellItem item)
+	// Open the line editor for an item (double-click or right-click Edit): its count plus whatever
+	// the pack's schema allows on this row type (enchantmentLevel, chance, maintainIngredient, ...).
+	private void editLine(MultisellItem item, boolean isIngredient)
 	{
 		final Item template = _itemManager == null ? null : _itemManager.getItemById(item.getItemId());
 		final String name = template != null ? template.getName() : ("id " + item.getItemId());
 
-		final Integer amount = DialogUtils.promptForAmount(_frame, name, item.getCount());
-		if (amount == null)
+		if (LineEditorDialog.edit(_frame, name, item, rowAttributes(isIngredient)))
 		{
-			return;
+			refreshAfterEdit();
+			Sound.playSound("Type.wav");
 		}
+	}
 
-		item.setCount(amount);
-		refreshAfterEdit();
-		Sound.playSound("Type.wav");
+	// The attributes the schema allows on an ingredient or production row (empty when no xsd was
+	// loaded, so the editor then just edits the count).
+	private List<SchemaAttribute> rowAttributes(boolean isIngredient)
+	{
+		if (_multisellSchema == null)
+		{
+			return List.of();
+		}
+		return isIngredient ? _multisellSchema.getIngredientAttributes() : _multisellSchema.getProductionAttributes();
 	}
 
 	// Duplicate an entry (right-click) and select the copy.

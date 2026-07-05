@@ -24,6 +24,7 @@ package com.l2skale.multisell.ui.renders;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.FlowLayout;
+import java.awt.Font;
 import java.util.function.IntFunction;
 
 import javax.swing.BorderFactory;
@@ -46,6 +47,10 @@ public class MultisellItemRenderer extends JPanel implements ListCellRenderer<Mu
 {
 	private static final long serialVersionUID = 1L;
 	private static final int SLOT = 32;
+
+	// Marker colors, chosen to read on both the dark and light list backgrounds.
+	private static final Color CHANCE_COLOR = new Color(90, 160, 220); // blue - a product's odds
+	private static final Color KEEP_COLOR = new Color(210, 160, 40); // amber - ingredient not consumed
 
 	private IntFunction<Item> _itemLookup;
 
@@ -72,11 +77,44 @@ public class MultisellItemRenderer extends JPanel implements ListCellRenderer<Mu
 
 		add(new ItemSlot(item, value.getItemId(), SLOT));
 
+		// "+N" enchant prefix, then the name and count.
 		final String name = item != null ? item.getName() : ("id " + value.getItemId());
-		final JLabel label = new JLabel(name + Numbers.countSuffix(value.getCount()));
+		final int enchant = value.getIntExtra("enchantmentLevel");
+		final String prefix = enchant > 0 ? "+" + enchant + " " : "";
+		final JLabel label = new JLabel(prefix + name + Numbers.countSuffix(value.getCount()));
 		label.setForeground(fg);
 		add(label);
 
+		// Per-line markers so the row is not a mystery: a product's chance, a kept ingredient.
+		if (value.hasExtra("chance"))
+		{
+			add(marker(formatChance(value.getExtra("chance")), CHANCE_COLOR));
+		}
+		if (value.getBooleanExtra("maintainIngredient"))
+		{
+			add(marker("keep", KEEP_COLOR));
+		}
+
 		return this;
+	}
+
+	// A small colored tag (e.g. "60%", "keep") shown after the item name.
+	private static JLabel marker(String text, Color color)
+	{
+		final JLabel tag = new JLabel(text);
+		tag.setForeground(color);
+		tag.setFont(tag.getFont().deriveFont(Font.BOLD, 11f));
+		return tag;
+	}
+
+	// "60" -> "60%", "12.0" -> "12%"; leaves real decimals (e.g. "12.5") intact.
+	private static String formatChance(String chance)
+	{
+		String value = chance.trim();
+		if (value.endsWith(".0"))
+		{
+			value = value.substring(0, value.length() - 2);
+		}
+		return value + "%";
 	}
 }
