@@ -22,10 +22,14 @@
 package com.l2skale.multisell.ui.utils;
 
 import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Image;
 import java.awt.event.ActionListener;
 
 import javax.swing.AbstractButton;
+import javax.swing.BorderFactory;
 import javax.swing.Icon;
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 
@@ -63,6 +67,28 @@ public class ButtonFactory
 		final JButton button = createButton(text, action);
 		button.setBackground(new Color(170, 45, 45));
 		button.setForeground(Color.WHITE);
+		return button;
+	}
+
+	// A flat, borderless icon-only button (the small clear-search and remove-npc buttons). The named
+	// image is loaded from resources and scaled to size x size; a missing image just yields no icon.
+	public static JButton createFlatIconButton(String iconName, int size, String tooltip, ActionListener action)
+	{
+		ImageIcon icon = ResourceIcons.loadResourceIconsIcon(iconName);
+		if (icon != null)
+		{
+			icon = new ImageIcon(icon.getImage().getScaledInstance(size, size, Image.SCALE_SMOOTH));
+		}
+
+		final JButton button = createIconButton(icon, action);
+		button.setBorder(BorderFactory.createEmptyBorder());
+		button.setContentAreaFilled(false);
+		button.setFocusPainted(false);
+		button.setToolTipText(tooltip);
+		if (icon != null)
+		{
+			button.setPreferredSize(new Dimension(icon.getIconWidth(), icon.getIconHeight()));
+		}
 		return button;
 	}
 

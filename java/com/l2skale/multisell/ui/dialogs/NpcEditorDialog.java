@@ -27,7 +27,6 @@ import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
-import java.awt.Image;
 import java.awt.Window;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -39,7 +38,6 @@ import java.util.function.IntPredicate;
 
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
-import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
@@ -54,7 +52,6 @@ import com.l2skale.multisell.ui.renders.RowColors;
 import com.l2skale.multisell.ui.utils.ButtonFactory;
 import com.l2skale.multisell.ui.utils.CustomBadge;
 import com.l2skale.multisell.ui.utils.MessageUtils;
-import com.l2skale.multisell.ui.utils.ResourceIcons;
 
 /*
  * The "Edit NPCs" popup. Manages the small list of npc ids a multisell is attached to:
@@ -268,26 +265,11 @@ public class NpcEditorDialog extends JDialog
 	// The same red delete_button texture used by the item search's clear button.
 	private JButton buildRemoveButton(int id)
 	{
-		ImageIcon icon = ResourceIcons.loadResourceIconsIcon("delete_button.png");
-		if (icon != null)
-		{
-			icon = new ImageIcon(icon.getImage().getScaledInstance(16, 16, Image.SCALE_SMOOTH));
-		}
-
-		final JButton button = ButtonFactory.createIconButton(icon, _ ->
+		return ButtonFactory.createFlatIconButton("delete_button.png", 16, "Remove this npc", _ ->
 		{
 			_ids.remove(id);
 			rebuildRows();
 		});
-		button.setBorder(BorderFactory.createEmptyBorder());
-		button.setContentAreaFilled(false);
-		button.setFocusPainted(false);
-		button.setToolTipText("Remove this npc");
-		if (icon != null)
-		{
-			button.setPreferredSize(new Dimension(icon.getIconWidth(), icon.getIconHeight()));
-		}
-		return button;
 	}
 
 	// The confirmation text shown next to an id: real name, the CB marker for -1, or a

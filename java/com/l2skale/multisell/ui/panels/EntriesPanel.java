@@ -58,10 +58,12 @@ public class EntriesPanel extends JPanel
 	private final JLabel _title = new JLabel("Entries");
 
 	private Multisell _multisell;
-	private Consumer<Entry> _onDuplicate;
-	private Consumer<Entry> _onDelete;
-	private Consumer<Entry> _onMoveUp;
-	private Consumer<Entry> _onMoveDown;
+
+	// Default to no-ops so a row action is always safe to call, even before Gui wires them up.
+	private Consumer<Entry> _onDuplicate = _ -> {};
+	private Consumer<Entry> _onDelete = _ -> {};
+	private Consumer<Entry> _onMoveUp = _ -> {};
+	private Consumer<Entry> _onMoveDown = _ -> {};
 
 	public EntriesPanel()
 	{
@@ -178,19 +180,11 @@ public class EntriesPanel extends JPanel
 	{
 		ListContextMenu.install(_view, (menu, entry, index) ->
 		{
-			menu.item("Move Up", () -> fire(_onMoveUp, entry)).enabled(index > 0);
-			menu.item("Move Down", () -> fire(_onMoveDown, entry)).enabled(index < (_model.getSize() - 1));
+			menu.item("Move Up", () -> _onMoveUp.accept(entry)).enabled(index > 0);
+			menu.item("Move Down", () -> _onMoveDown.accept(entry)).enabled(index < (_model.getSize() - 1));
 			menu.separator();
-			menu.item("Duplicate", () -> fire(_onDuplicate, entry));
-			menu.item("Delete", () -> fire(_onDelete, entry));
+			menu.item("Duplicate", () -> _onDuplicate.accept(entry));
+			menu.item("Delete", () -> _onDelete.accept(entry));
 		});
-	}
-
-	private static void fire(Consumer<Entry> action, Entry entry)
-	{
-		if (action != null)
-		{
-			action.accept(entry);
-		}
 	}
 }

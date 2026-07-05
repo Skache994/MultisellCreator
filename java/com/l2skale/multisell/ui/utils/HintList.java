@@ -43,11 +43,6 @@ public class HintList<T> extends JList<T>
 
 	private String _hint = "";
 
-	public HintList()
-	{
-		super();
-	}
-
 	public HintList(ListModel<T> model)
 	{
 		super(model);

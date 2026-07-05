@@ -37,16 +37,8 @@ public class DialogUtils
 {
 	public static Integer promptForAmount(Window parent, String itemName)
 	{
-		return promptForAmount(parent, itemName, 1);
-	}
-
-	public static Integer promptForAmount(Window parent, String itemName, int initial)
-	{
 		final AmountField field = new AmountField();
-		if (initial > 0)
-		{
-			field.setValue(initial);
-		}
+		field.setValue(1);
 
 		// Focus and select the field as soon as the dialog is shown.
 		field.addAncestorListener(new AncestorListener()

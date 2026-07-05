@@ -82,11 +82,6 @@ public class ThemeManager
 		return isDarkMode;
 	}
 
-	public static boolean getCurrentTheme()
-	{
-		return isDarkMode; // Returns true for Dark, false for Light.
-	}
-
 	// Apply the theme saved from last session (defaults to dark on first run).
 	public static void applyInitialTheme()
 	{

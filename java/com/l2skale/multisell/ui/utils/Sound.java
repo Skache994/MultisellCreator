@@ -40,10 +40,10 @@ public class Sound
 
 	/**
 	 * Plays a sound file synchronously from the classpath.
-	 * 
+	 *
 	 * @param soundFileName The name of the sound file (must be in WAV format)
 	 */
-	public static void play(String soundFileName)
+	private static void play(String soundFileName)
 	{
 		// Get the URL of the sound file from the classpath
 		URL soundUrl = Sound.class.getClassLoader().getResource(SOUND_DIR + soundFileName);

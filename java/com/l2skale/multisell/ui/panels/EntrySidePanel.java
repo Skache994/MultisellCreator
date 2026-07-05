@@ -57,10 +57,11 @@ public class EntrySidePanel extends JPanel
 	private final HintList<MultisellItem> _view = new HintList<>(_model);
 	private final MultisellItemRenderer _renderer = new MultisellItemRenderer();
 
-	private Consumer<MultisellItem> _onRemove;
-	private Consumer<MultisellItem> _onEdit;
-	private Consumer<MultisellItem> _onMoveUp;
-	private Consumer<MultisellItem> _onMoveDown;
+	// Default to no-ops so a row action is always safe to call, even before Gui wires them up.
+	private Consumer<MultisellItem> _onRemove = _ -> {};
+	private Consumer<MultisellItem> _onEdit = _ -> {};
+	private Consumer<MultisellItem> _onMoveUp = _ -> {};
+	private Consumer<MultisellItem> _onMoveDown = _ -> {};
 
 	public EntrySidePanel(String title)
 	{
@@ -158,7 +159,7 @@ public class EntrySidePanel extends JPanel
 					final MultisellItem selected = _view.getSelectedValue();
 					if (selected != null)
 					{
-						fire(_onEdit, selected);
+						_onEdit.accept(selected);
 					}
 				}
 			}
@@ -167,20 +168,12 @@ public class EntrySidePanel extends JPanel
 		// Right-click menu. Edit opens the same line editor as a double-click.
 		ListContextMenu.install(_view, (menu, item, index) ->
 		{
-			menu.item("Edit", () -> fire(_onEdit, item));
+			menu.item("Edit", () -> _onEdit.accept(item));
 			menu.separator();
-			menu.item("Move Up", () -> fire(_onMoveUp, item)).enabled(index > 0);
-			menu.item("Move Down", () -> fire(_onMoveDown, item)).enabled(index < (_model.getSize() - 1));
+			menu.item("Move Up", () -> _onMoveUp.accept(item)).enabled(index > 0);
+			menu.item("Move Down", () -> _onMoveDown.accept(item)).enabled(index < (_model.getSize() - 1));
 			menu.separator();
-			menu.item("Remove", () -> fire(_onRemove, item));
+			menu.item("Remove", () -> _onRemove.accept(item));
 		});
-	}
-
-	private static void fire(Consumer<MultisellItem> action, MultisellItem item)
-	{
-		if (action != null)
-		{
-			action.accept(item);
-		}
 	}
 }

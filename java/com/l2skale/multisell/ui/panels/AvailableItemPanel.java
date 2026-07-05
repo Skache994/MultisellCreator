@@ -26,7 +26,6 @@ import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
-import java.awt.Image;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
@@ -63,7 +62,6 @@ import com.l2skale.multisell.ui.utils.Fonts;
 import com.l2skale.multisell.ui.utils.HintList;
 import com.l2skale.multisell.ui.utils.ListContextMenu;
 import com.l2skale.multisell.ui.utils.MessageUtils;
-import com.l2skale.multisell.ui.utils.ResourceIcons;
 import com.l2skale.multisell.ui.utils.Sound;
 import com.l2skale.multisell.ui.utils.TextFields;
 
@@ -197,31 +195,12 @@ public class AvailableItemPanel extends JPanel
 
 	private JButton createClearButton()
 	{
-		ImageIcon clearIcon = ResourceIcons.loadResourceIconsIcon("delete_button.png");
-
-		if (clearIcon != null)
-		{
-			// Scale down the icon if needed.
-			Image img = clearIcon.getImage().getScaledInstance(16, 16, Image.SCALE_SMOOTH);
-			clearIcon = new ImageIcon(img);
-		}
-		else
-		{
-			System.err.println("Failed to load delete_button.png");
-		}
-
-		JButton clearButton = ButtonFactory.createIconButton(clearIcon, _ ->
+		return ButtonFactory.createFlatIconButton("delete_button.png", 16, "Clear search", _ ->
 		{
 			_searchField.setText("");
 			resetFilter();
 			_searchField.requestFocus();
 		});
-		clearButton.setPreferredSize(new Dimension(clearIcon.getIconWidth(), clearIcon.getIconHeight()));
-		clearButton.setBorder(BorderFactory.createEmptyBorder());
-		clearButton.setContentAreaFilled(false);
-		clearButton.setFocusPainted(false);
-		clearButton.setToolTipText("Clear search");
-		return clearButton;
 	}
 
 	// Reset the list to show all items
