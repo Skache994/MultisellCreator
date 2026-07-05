@@ -62,23 +62,23 @@ public class MultisellSchemaLoader
 
 		// xs:schema -> the <list> element declaration and its complexType.
 		final Element schema = doc.getDocumentElement();
-		final Element listElement = requireChildNamed(schema, "element", "list", "list element");
-		final Element listType = requireChild(listElement, "complexType", "list complexType");
+		final Element listElement = requireChild(schema, "element", "list", "list element");
+		final Element listType = requireChild(listElement, "complexType", null, "list complexType");
 
 		// <list> attributes are the direct xs:attribute children of its complexType.
 		final List<SchemaAttribute> listAttributes = readAttributes(listType);
 
 		// Dive to the <ingredient> and <production> complexTypes: list -> sequence -> item -> sequence.
-		final Element listSequence = requireChild(listType, "sequence", "list sequence");
-		final Element itemElement = requireChildNamed(listSequence, "element", "item", "item element");
-		final Element itemType = requireChild(itemElement, "complexType", "item complexType");
-		final Element itemSequence = requireChild(itemType, "sequence", "item sequence");
+		final Element listSequence = requireChild(listType, "sequence", null, "list sequence");
+		final Element itemElement = requireChild(listSequence, "element", "item", "item element");
+		final Element itemType = requireChild(itemElement, "complexType", null, "item complexType");
+		final Element itemSequence = requireChild(itemType, "sequence", null, "item sequence");
 
-		final Element ingredientElement = requireChildNamed(itemSequence, "element", "ingredient", "ingredient element");
-		final Element productionElement = requireChildNamed(itemSequence, "element", "production", "production element");
+		final Element ingredientElement = requireChild(itemSequence, "element", "ingredient", "ingredient element");
+		final Element productionElement = requireChild(itemSequence, "element", "production", "production element");
 
-		final List<SchemaAttribute> ingredientAttributes = readAttributes(requireChild(ingredientElement, "complexType", "ingredient complexType"));
-		final List<SchemaAttribute> productionAttributes = readAttributes(requireChild(productionElement, "complexType", "production complexType"));
+		final List<SchemaAttribute> ingredientAttributes = readAttributes(requireChild(ingredientElement, "complexType", null, "ingredient complexType"));
+		final List<SchemaAttribute> productionAttributes = readAttributes(requireChild(productionElement, "complexType", null, "production complexType"));
 
 		return new MultisellSchema(listAttributes, ingredientAttributes, productionAttributes);
 	}
@@ -106,19 +106,9 @@ public class MultisellSchemaLoader
 		return attributes;
 	}
 
-	// The first direct child element with the given local tag name.
-	private static Element requireChild(Element parent, String localName, String what) throws Exception
-	{
-		final Element child = childElement(parent, localName, null);
-		if (child == null)
-		{
-			throw new IllegalStateException("multisell.xsd is not in the expected shape: missing " + what + ".");
-		}
-		return child;
-	}
-
-	// The first direct child element with the given local tag name AND name="nameAttr".
-	private static Element requireChildNamed(Element parent, String localName, String nameAttr, String what) throws Exception
+	// The first direct child element with the given local tag name, and (when nameAttr is given)
+	// its name="nameAttr". Throws when it is missing, since the xsd must be in the expected shape.
+	private static Element requireChild(Element parent, String localName, String nameAttr, String what) throws Exception
 	{
 		final Element child = childElement(parent, localName, nameAttr);
 		if (child == null)

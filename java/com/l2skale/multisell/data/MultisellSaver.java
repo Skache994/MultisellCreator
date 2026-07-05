@@ -66,8 +66,7 @@ public class MultisellSaver
 				final String npcName = npcComment(npcId, npcLookup);
 				if (npcName != null)
 				{
-					// "--" is illegal inside an XML comment, so soften it just in case.
-					sb.append(" <!-- ").append(npcName.replace("--", "-")).append(" -->");
+					sb.append(" <!-- ").append(comment(npcName)).append(" -->");
 				}
 				sb.append("\n");
 			}
@@ -150,10 +149,15 @@ public class MultisellSaver
 		final Item template = itemLookup == null ? null : itemLookup.apply(item.getItemId());
 		if (template != null)
 		{
-			// "--" is illegal inside an XML comment, so soften it just in case.
-			sb.append(" <!-- ").append(template.getName().replace("--", "-")).append(" -->");
+			sb.append(" <!-- ").append(comment(template.getName())).append(" -->");
 		}
 
 		sb.append("\n");
+	}
+
+	// A name made safe to sit inside an XML comment: "--" is illegal there, so soften it just in case.
+	private static String comment(String text)
+	{
+		return text.replace("--", "-");
 	}
 }

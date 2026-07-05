@@ -72,7 +72,7 @@ import com.l2skale.multisell.ui.utils.MessageUtils;
 import com.l2skale.multisell.ui.utils.Sound;
 
 /*
- * author Skache
+ * @author Skache
  */
 public class Gui
 {
@@ -102,14 +102,10 @@ public class Gui
 	{
 		// Icons come from the bundled default Icon.utx out of the box. If the user pointed at a full
 		// client folder before, restore it so its extra packages (BranchIcon, BranchSys...) load too.
-		final String texturesPath = SettingsManager.getLastTexturesPath();
-		if (texturesPath != null)
+		final File texturesDir = savedDir(SettingsManager.getLastTexturesPath());
+		if (texturesDir != null)
 		{
-			final File texturesDir = new File(texturesPath);
-			if (texturesDir.isDirectory())
-			{
-				TextureProvider.setFolder(texturesDir);
-			}
+			TextureProvider.setFolder(texturesDir);
 		}
 
 		// Theme toggle button (sun/moon icon). The icon is set by ThemeManager just below.
@@ -297,6 +293,19 @@ public class Gui
 		}.execute();
 	}
 
+	// A remembered settings path resolved to a real directory, or null when it is unset or no longer
+	// exists - so the file choosers only reopen at a folder that is still there.
+	private static File savedDir(String path)
+	{
+		if (path == null)
+		{
+			return null;
+		}
+
+		final File dir = new File(path);
+		return dir.isDirectory() ? dir : null;
+	}
+
 	// A meaningful name for the loaded pack. The user usually picks the "game" folder (or its
 	// "data"), whose name says nothing, so we walk up past those generic wrappers to the project
 	// folder - e.g. .../L2J_Mobius_CT_0_Interlude/dist/game -> "L2J_Mobius_CT_0_Interlude".
@@ -347,14 +356,10 @@ public class Gui
 		chooser.setDialogTitle("Select your Lineage 2 game folder");
 		chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
 
-		final String lastPath = SettingsManager.getLastTexturesPath();
-		if (lastPath != null)
+		final File lastDir = savedDir(SettingsManager.getLastTexturesPath());
+		if (lastDir != null)
 		{
-			final File lastDir = new File(lastPath);
-			if (lastDir.isDirectory())
-			{
-				chooser.setCurrentDirectory(lastDir);
-			}
+			chooser.setCurrentDirectory(lastDir);
 		}
 
 		if (chooser.showOpenDialog(_frame) != JFileChooser.APPROVE_OPTION)
@@ -431,14 +436,10 @@ public class Gui
 		chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
 
 		// Start the chooser at the last opened datapack, if we have one.
-		final String lastPath = SettingsManager.getLastDatapackPath();
-		if (lastPath != null)
+		final File lastDir = savedDir(SettingsManager.getLastDatapackPath());
+		if (lastDir != null)
 		{
-			final File lastDir = new File(lastPath);
-			if (lastDir.isDirectory())
-			{
-				chooser.setCurrentDirectory(lastDir);
-			}
+			chooser.setCurrentDirectory(lastDir);
 		}
 
 		if (chooser.showOpenDialog(_frame) != JFileChooser.APPROVE_OPTION)
@@ -489,14 +490,10 @@ public class Gui
 
 		// Start at the last folder a multisell was opened from, else the datapack's multisell dir.
 		File startDir = _datapack.getMultisellDir();
-		final String lastMultisell = SettingsManager.getLastMultisellPath();
-		if (lastMultisell != null)
+		final File lastDir = savedDir(SettingsManager.getLastMultisellPath());
+		if (lastDir != null)
 		{
-			final File lastDir = new File(lastMultisell);
-			if (lastDir.isDirectory())
-			{
-				startDir = lastDir;
-			}
+			startDir = lastDir;
 		}
 
 		final JFileChooser chooser = new JFileChooser(startDir);
