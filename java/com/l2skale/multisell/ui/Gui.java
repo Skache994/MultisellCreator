@@ -707,6 +707,7 @@ public class Gui
 		final Item template = _itemManager == null ? null : _itemManager.getItemById(item.getItemId());
 		final String name = template != null ? template.getName() : ("id " + item.getItemId());
 
+		Sound.playSound("window_open.wav"); // Same open sound as viewing an item's info.
 		if (LineEditorDialog.edit(_frame, name, item, rowAttributes(isIngredient)))
 		{
 			refreshAfterEdit();
@@ -808,8 +809,9 @@ public class Gui
 	}
 
 	// The one reorder operation, shared by the right-click menu and drag-and-drop: take the
-	// element at 'from' and put it at index 'to'. 'to' is clamped; a no-op still returns the
-	// element so the moved row stays selected. Returns null only if 'from' is invalid.
+	// element at 'from' and put it at index 'to' (clamped). Returns the moved element, or null
+	// when nothing actually moved - an invalid 'from', or a drag dropped back in the same spot -
+	// so callers only refresh and play the reorder sound on a real move.
 	private static <T> T moveTo(List<T> list, int from, int to)
 	{
 		if ((from < 0) || (from >= list.size()))
@@ -820,7 +822,7 @@ public class Gui
 		final int target = Math.max(0, Math.min(to, list.size() - 1));
 		if (target == from)
 		{
-			return list.get(from);
+			return null; // Dropped in place - not a reorder.
 		}
 
 		final T element = list.remove(from);
