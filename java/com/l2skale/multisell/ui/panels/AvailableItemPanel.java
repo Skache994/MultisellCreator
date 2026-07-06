@@ -244,8 +244,8 @@ public class AvailableItemPanel extends JPanel
 	{
 		ListContextMenu.install(_availableItemsView, (menu, item, _) ->
 		{
-			menu.item("Add as Ingredient", () -> _onAddIngredient.accept(item));
 			menu.item("Add as Product", () -> _onAddProduct.accept(item));
+			menu.item("Add as Ingredient", () -> _onAddIngredient.accept(item));
 			menu.separator();
 			menu.item("View Info", () -> showItemInfo(item));
 			menu.item("Export Icon...", () -> exportIcon(item));

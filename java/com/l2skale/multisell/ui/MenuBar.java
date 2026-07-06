@@ -21,20 +21,32 @@
  */
 package com.l2skale.multisell.ui;
 
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Cursor;
 import java.awt.Desktop;
+import java.awt.FlowLayout;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.net.URI;
 import java.net.URL;
 
+import javax.swing.BorderFactory;
 import javax.swing.ImageIcon;
+import javax.swing.JButton;
+import javax.swing.JDialog;
 import javax.swing.JEditorPane;
 import javax.swing.JFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.border.Border;
 import javax.swing.event.HyperlinkEvent;
 
 import com.l2skale.multisell.managers.ThemeManager;
+import com.l2skale.multisell.ui.utils.ButtonFactory;
 import com.l2skale.multisell.ui.utils.ResourceIcons;
 
 /*
@@ -44,6 +56,7 @@ public class MenuBar
 {
 	private static final String GITHUB_URL = "https://github.com/Skache994/MultisellCreator";
 	private static final String WEBSITE_URL = "http://www.l2skale.com";
+	private static final String DONATE_URL = "https://paypal.me/VlatkoPockov";
 
 	public static JMenuBar createMenuBar(JFrame parentFrame, Runnable onOpenDatapack, Runnable onNewMultisell, Runnable onOpenMultisell, Runnable onSaveMultisell, Runnable onDeleteMultisell)
 	{
@@ -138,11 +151,64 @@ public class MenuBar
 			+ "<div style='margin:2px;'><a href='" + GITHUB_URL + "' style='color:" + linkColor + ";'>GitHub repository</a></div>" //
 			+ "</body></html>";
 
-		final ImageIcon appIcon = ResourceIcons.loadResourceIconsIcon("MSC_64x64.png");
-		JOptionPane.showMessageDialog(parentFrame, htmlPane(html), "About", JOptionPane.INFORMATION_MESSAGE, appIcon != null ? appIcon : new ImageIcon());
+		final JDialog dialog = new JDialog(parentFrame, "About", true);
+
+		final JPanel coffeeHolder = new JPanel(new BorderLayout());
+		coffeeHolder.setOpaque(false);
+		coffeeHolder.add(buildCoffeeButton(), BorderLayout.NORTH);
+
+		final JPanel content = new JPanel(new BorderLayout(12, 0));
+		content.setBorder(BorderFactory.createEmptyBorder(16, 16, 8, 16));
+		content.add(coffeeHolder, BorderLayout.WEST);
+		content.add(htmlPane(html), BorderLayout.CENTER);
+		dialog.add(content, BorderLayout.CENTER);
+
+		final JButton okButton = ButtonFactory.createButton("OK", _ -> dialog.dispose());
+		final JPanel buttons = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+		buttons.setBorder(BorderFactory.createEmptyBorder(0, 12, 8, 12));
+		buttons.add(okButton);
+		dialog.add(buttons, BorderLayout.SOUTH);
+
+		dialog.getRootPane().setDefaultButton(okButton);
+		dialog.pack();
+		dialog.setLocationRelativeTo(parentFrame);
+		dialog.setVisible(true);
 	}
 
-	// A read-only, transparent HTML pane whose links open in the browser.
+	private static JButton buildCoffeeButton()
+	{
+		final ImageIcon icon = ResourceIcons.loadResourceIconsIcon("buymeacoffee.png");
+		if (icon == null)
+		{
+			return ButtonFactory.createButton("Buy me a coffee", _ -> browse(DONATE_URL));
+		}
+
+		final JButton button = ButtonFactory.createIconButton(icon, _ -> browse(DONATE_URL));
+		button.setToolTipText("Spread your love");
+		button.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+		button.setContentAreaFilled(false);
+		button.setFocusPainted(false);
+
+		final Border idle = BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(new Color(150, 60, 150), 1, true), BorderFactory.createEmptyBorder(4, 6, 4, 6));
+		final Border hover = BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(new Color(230, 90, 210), 2, true), BorderFactory.createEmptyBorder(3, 5, 3, 5));
+		button.setBorder(idle);
+		button.addMouseListener(new MouseAdapter()
+		{
+			@Override
+			public void mouseEntered(MouseEvent e)
+			{
+				button.setBorder(hover);
+			}
+
+			@Override
+			public void mouseExited(MouseEvent e)
+			{
+				button.setBorder(idle);
+			}
+		});
+		return button;
+	}
+
 	private static JEditorPane htmlPane(String html)
 	{
 		final JEditorPane pane = new JEditorPane("text/html", html);
